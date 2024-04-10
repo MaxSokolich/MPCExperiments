@@ -151,95 +151,11 @@
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <widget class="QPushButton" name="choosevideobutton">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>50</y>
-        <width>101</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">     QPushButton {
-                color: rgb(255, 255, 255);
-                background-color: rgb(0, 0, 0);
-                border-style: outset;
-                border-width: 2px;
-                border-radius: 10px;
-                border-color: rgb(0, 0, 0);
-                min-width: 1em;
-                padding: 1px;
-            }
-            QPushButton:hover {
-                background-color: rgb(100, 100, 100);
-                color: rgb(255, 255, 255);
-                border-color: rgb(100, 100, 100);
-            
-            
-            }</string>
-      </property>
-      <property name="text">
-       <string>Choose Video</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="pausebutton">
-      <property name="geometry">
-       <rect>
-        <x>170</x>
-        <y>50</y>
-        <width>121</width>
-        <height>30</height>
-       </rect>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>300</width>
-        <height>30</height>
-       </size>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QPushButton {
-                color: rgb(255, 255, 255);
-                background-color: rgb(150, 0, 0);
-                border-style: outset;
-                border-width: 3px;
-                border-radius: 10px;
-                border-color: rgb(150, 0, 0);
-                min-width: 1em;
-                padding: 1px;
-            }
-            QPushButton:checked {
-                color: rgb(255, 255, 255);
-                background-color: rgb(0, 0, 150);
-                border-style: inset;
-                border-width: 3px;
-                border-radius: 10px;
-                border-color: rgb(0, 0, 255);
-                font: bold 12px;
-                min-width: 1em;
-                padding: 1px;
-            }
-            QPushButton:hover {
-                background-color: rgb(100, 100, 100);
-                color: rgb(255, 255, 255);
-                border-color: rgb(255, 0, 0);
-                padding-left: 2px;
-                padding-top: 2px;
-            }</string>
-      </property>
-      <property name="text">
-       <string>Pause</string>
-      </property>
-      <property name="checkable">
-       <bool>true</bool>
-      </property>
-     </widget>
      <widget class="QPushButton" name="savedatabutton">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>120</y>
+        <y>140</y>
         <width>131</width>
         <height>31</height>
        </rect>
@@ -277,8 +193,8 @@
      <widget class="QPushButton" name="recordbutton">
       <property name="geometry">
        <rect>
-        <x>170</x>
-        <y>120</y>
+        <x>160</x>
+        <y>140</y>
         <width>131</width>
         <height>31</height>
        </rect>
@@ -319,75 +235,6 @@
       </property>
       <property name="checkable">
        <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QLabel" name="framelabel">
-      <property name="geometry">
-       <rect>
-        <x>30</x>
-        <y>90</y>
-        <width>121</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>300</width>
-        <height>25</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Frame: </string>
-      </property>
-     </widget>
-     <widget class="QToolButton" name="leftbutton">
-      <property name="geometry">
-       <rect>
-        <x>170</x>
-        <y>90</y>
-        <width>51</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QToolButton {
-                color: rgb(255, 255, 255);
-                background-color: rgb(0, 0, 0);
-                border-style: outset;
-                border-width: px;
-                border-radius: 10px;
-                border: 2px solid rgb(0, 0, 0);
-                font: bold 16px;
-                min-width: 1em;
-                padding: 1px;
-            }
-            QToolButton:hover {
-                background-color: rgb(100, 100, 100);
-                color: rgb(255, 255, 255);
-                border: 2px solid rgb(0, 255, 0);
-            }
-            QToolButton:pressed {
-                background-color: rgb(100, 100, 100);
-                border: 2px solid rgb(255, 0, 0);
-                border-style: inset;
-                padding-left: 5px;
-                padding-top: 5px;
-            }</string>
-      </property>
-      <property name="text">
-       <string>...</string>
-      </property>
-      <property name="autoRepeat">
-       <bool>false</bool>
-      </property>
-      <property name="autoRepeatDelay">
-       <number>0</number>
-      </property>
-      <property name="autoRepeatInterval">
-       <number>1</number>
-      </property>
-      <property name="arrowType">
-       <enum>Qt::LeftArrow</enum>
       </property>
      </widget>
      <widget class="QPushButton" name="trackbutton">
@@ -440,53 +287,6 @@ QPushButton {
       </property>
       <property name="checkable">
        <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QToolButton" name="rightbutton">
-      <property name="geometry">
-       <rect>
-        <x>240</x>
-        <y>90</y>
-        <width>50</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QToolButton {
-                color: rgb(255, 255, 255);
-                background-color: rgb(0, 0, 0);
-                border-style: outset;
-                border-width: px;
-                border-radius: 10px;
-                border: 2px solid rgb(0, 0, 0);
-                font: bold 16px;
-                min-width: 1em;
-                padding: 1px;
-            }
-            QToolButton:hover {
-                background-color: rgb(100, 100, 100);
-                color: rgb(255, 255, 255);
-                border: 2px solid rgb(0, 255, 0);
-            }
-            QToolButton:pressed {
-                background-color: rgb(100, 100, 100);
-                border: 2px solid rgb(255, 0, 0);
-                border-style: inset;
-                padding-left: 5px;
-                padding-top: 5px;
-            }</string>
-      </property>
-      <property name="text">
-       <string>...</string>
-      </property>
-      <property name="autoRepeat">
-       <bool>false</bool>
-      </property>
-      <property name="autoRepeatInterval">
-       <number>1</number>
-      </property>
-      <property name="arrowType">
-       <enum>Qt::RightArrow</enum>
       </property>
      </widget>
      <widget class="QLabel" name="exposurelabel">
@@ -575,6 +375,90 @@ QPushButton {
       </property>
       <property name="displayIntegerBase">
        <number>10</number>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="import_excel_actions">
+      <property name="geometry">
+       <rect>
+        <x>40</x>
+        <y>50</y>
+        <width>201</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+                color: rgb(0, 255, 255);
+                background-color: rgb(0, 0, 0);
+                border-style: outset;
+                border-width: 3px;
+                border-radius: 10px;
+                border-color: rgb(0, 0, 0);
+                min-width: 1em;
+                padding: 6px;
+            }
+      
+QPushButton:hover {
+                background-color: rgb(100, 100, 100);
+                color: rgb(255, 255, 255);
+                border-color: rgb(100, 100, 100);
+                padding-left: 5px;
+                padding-top: 5px;
+            }
+            </string>
+      </property>
+      <property name="text">
+       <string>Import Excel Actions</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="apply_actions">
+      <property name="geometry">
+       <rect>
+        <x>50</x>
+        <y>90</y>
+        <width>181</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+                color: rgb(255, 255, 255);
+                background-color: rgb(0, 0, 0);
+                border-style: outset;
+                border-width: 3px;
+                border-radius: 10px;
+                border-color: rgb(0, 0, 0);
+                min-width: 1em;
+                padding: 6px;
+            }
+      
+            QPushButton:checked {
+                color: rgb(255, 255, 255);
+                background-color: rgb(255, 0, 0);
+                border-style: inset;
+                border-width: 3px;
+                border-radius: 10px;
+                border-color: rgb(255, 0, 0);
+                font: bold 16px;
+                min-width: 1em;
+               
+            }
+            QPushButton:hover {
+                background-color: rgb(100, 100, 100);
+                color: rgb(255, 255, 255);
+                border-color: rgb(100, 100, 100);
+                padding-left: 5px;
+                padding-top: 5px;
+            }</string>
+      </property>
+      <property name="text">
+       <string>Apply Excel Actions</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
       </property>
      </widget>
     </widget>
@@ -773,8 +657,8 @@ QPushButton {
      <widget class="QPushButton" name="maskbutton">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>10</y>
+        <x>10</x>
+        <y>40</y>
         <width>101</width>
         <height>31</height>
        </rect>
@@ -810,8 +694,8 @@ QPushButton {
      <widget class="QCheckBox" name="maskinvert_checkBox">
       <property name="geometry">
        <rect>
-        <x>140</x>
-        <y>10</y>
+        <x>130</x>
+        <y>40</y>
         <width>131</width>
         <height>30</height>
        </rect>
@@ -872,6 +756,25 @@ QPushButton {
       </property>
       <property name="text">
        <string>Upper Thresh</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="framelabel">
+      <property name="geometry">
+       <rect>
+        <x>30</x>
+        <y>10</y>
+        <width>121</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>300</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Frame: </string>
       </property>
      </widget>
     </widget>

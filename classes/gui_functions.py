@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QFileDialog
 import sys
 from PyQt5.QtGui import QWheelEvent
 from PyQt5 import QtGui
@@ -111,17 +111,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setFile()
      
-
-        #tracker tab functions
-        self.ui.pausebutton.hide()
-        self.ui.leftbutton.hide()
-        self.ui.rightbutton.hide()
-        
-        self.ui.choosevideobutton.clicked.connect(self.selectFile)
         self.ui.trackbutton.clicked.connect(self.track)
-        self.ui.pausebutton.clicked.connect(self.pause)
-        self.ui.rightbutton.clicked.connect(self.frameright)
-        self.ui.leftbutton.clicked.connect(self.frameleft)
         self.ui.maskbutton.clicked.connect(self.showmask)
         self.ui.maskinvert_checkBox.toggled.connect(self.invertmaskcommand)
     
@@ -141,27 +131,72 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.exposurebox.valueChanged.connect(self.get_exposure)
         self.ui.croppedmasktoggle.clicked.connect(self.showcroppedoriginal)
         self.ui.croppedrecordbutton.clicked.connect(self.croppedrecordfunction)
-  
+        self.ui.import_excel_actions.clicked.connect(self.read_excel_actions)
+        self.ui.apply_actions.clicked.connect(self.apply_excel_actions)
+
+        #readomg excel file variables        
+        self.excel_file_name = None
+        self.excel_actions_df = None
+        self.excel_actions_status = False
+
+
+    def read_excel_actions(self):
+        options = QFileDialog.Options()
+        self.excel_file_name, _ = QFileDialog.getOpenFileName(self, "Open Excel File", "", "Excel Files (*.xlsx *.xls)", options=options)
+        if self.excel_file_name:
+            self.excel_actions_df = pd.read_excel(self.excel_file_name)
+            
+        
+    def apply_excel_actions(self):
+        if self.ui.apply_actions.isChecked():
+            self.excel_actions_status = True
+            self.actions_counter = 0
+            self.ui.apply_actions.setText("Stop")
+        else:
+            self.excel_actions_status = False
+            self.ui.apply_actions.setText("Apply")
+
+    
+
 
 
 
 
     def update_actions(self, robot_list):
-       
-
-
-        #insert algorithm below
-        Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list)
         
-        self.arduino.send(Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq)
+        #insert algorithm below
 
+        #Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list)
+        #self.arduino.send(Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq)
+        #if the apply button is pressed and an excel file has been opened
+        
+        
+        if self.excel_actions_status == True and self.excel_actions_df is not None:
+            
+            self.actions_counter +=1
 
-
-
-
-
-
-
+            if self.actions_counter < self.excel_actions_df['Frame'].iloc[-1]:
+                filtered_row = self.excel_actions_df[self.excel_actions_df['Frame'] == self.actions_counter]
+            
+                Bx = float(filtered_row["Bx"])
+                By = float(filtered_row["By"])
+                Bz = float(filtered_row["Bz"])
+                alpha = float(filtered_row["Alpha"])
+                gamma = float(filtered_row["Gamma"])
+                freq = float(filtered_row["Rolling Frequency"])
+                psi = float(filtered_row["Psi"])
+                gradient = float(filtered_row["Gradient"])
+                acoustic_freq = float(filtered_row["Acoustic Frequency"])
+                self.arduino.send(Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq)
+            
+            else:
+                self.excel_actions_status = False
+                self.ui.apply_actions.setText("Apply")
+                self.ui.apply_actions.setChecked(False)
+                self.arduino.send(0,0,0,0,0,0,0,0,0)
+            
+        
+        
         #DEFINE CURRENT ROBOT PARAMS TO A LIST
         if len(robot_list) > 0:
             self.robots = []
@@ -185,6 +220,32 @@ class MainWindow(QtWidgets.QMainWindow):
             for (sheet, bot) in zip(self.robot_params_sheets,self.robots):
                 sheet.append(bot[:-1])
       
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -275,9 +336,6 @@ class MainWindow(QtWidgets.QMainWindow):
                         robot.crop_length = self.ui.robotcroplengthbox.value()
                         self.tracker.robot_list.append(robot) #this has to include tracker.robot_list because I need to add it to that class
                         
-        
-               
-                    
                     
                     if event.buttons() == QtCore.Qt.RightButton: 
                         self.drawing = True
@@ -420,20 +478,10 @@ class MainWindow(QtWidgets.QMainWindow):
             try:
                 self.cap  = EasyPySpin.VideoCapture(0)
                 self.cap.set(cv2.CAP_PROP_AUTO_WB, True)
-                #self.cap.set(cv2.CAP_PROP_FPS, 30)
-                #self.cap.set(cv2.CAP_PROP_FPS, 30)
             except Exception:
                 self.cap  = cv2.VideoCapture(0) 
                 self.tbprint("No EasyPySpin Camera Available")
-            self.ui.pausebutton.hide()
-            self.ui.leftbutton.hide()
-            self.ui.rightbutton.hide()
-            self.ui.frameslider.hide()
-        else:
-            self.cap  = cv2.VideoCapture(self.videopath)
-            self.ui.pausebutton.show()
-            self.ui.leftbutton.show()
-            self.ui.rightbutton.show()
+          
         
         self.video_width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.video_height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -447,43 +495,9 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.videopath == 0:
             self.ui.robotsizeunitslabel.setText("um")
             self.ui.robotvelocityunitslabel.setText("um/s")
-        else:
-            self.ui.robotsizeunitslabel.setText("px")
-            self.ui.robotvelocityunitslabel.setText("px/s")
-            self.totalnumframes = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
-            self.tbprint("Total Frames: {} ".format(self.totalnumframes))
-            self.ui.frameslider.setGeometry(QtCore.QRect(10, self.display_height+12, self.display_width, 20))
-            self.ui.frameslider.setMaximum(self.totalnumframes)
-            self.ui.frameslider.show()
         
-        #if self.ui.recordbutton.isChecked():
-            #self.recordfunction()
 
-        #if not self.ui.trackbutton.isChecked(): #clear the pixmap
         self.ui.VideoFeedLabel.setPixmap(QtGui.QPixmap())
-        
-
-
-    def selectFile(self):
-        options = QtWidgets.QFileDialog.Options()
-        options |= QtWidgets.QFileDialog.ReadOnly
-        file_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Open File", "", "All Files (*);;Text Files (*.txt);;Python Files (*.py)", options=options)
-
-        if file_path:
-            self.videopath = file_path
-            file_info = QtCore.QFileInfo(file_path)
-            file_name = file_info.fileName()
-            self.ui.choosevideobutton.setText(file_name)
-            self.tbprint(file_name)
-        else:
-            self.videopath = 0
-            self.ui.choosevideobutton.setText("Live")
-            self.tbprint("Using Video Camera")
-        
-        self.setFile()
-        
-    
-    
         
 
 
@@ -491,8 +505,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.videopath is not None:
             if self.ui.trackbutton.isChecked():
                     
-                self.setFile()
-                
                 self.tracker = VideoThread(self)
                 self.tracker.change_pixmap_signal.connect(self.update_image)
                 self.tracker.cropped_frame_signal.connect(self.update_croppedimage)
@@ -518,17 +530,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.ui.maskbutton.setText("Mask")
                     self.ui.maskbutton.setChecked(False)
 
-                    #also reset pause button
-                    self.ui.pausebutton.setChecked(False)
-                    self.ui.pausebutton.setText("Pause")
-
-                    self.ui.pausebutton.hide()
-                    self.ui.leftbutton.hide()
-                    self.ui.rightbutton.hide()
-                
-
+        
                     #zero arduino commands
-
                     del self.tracker.robot_list[:]
 
 
@@ -568,27 +571,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.maskinvert_checkBox.setText("Invert Mask: " + str(self.ui.maskinvert_checkBox.isChecked()))
             self.tracker.maskinvert = self.ui.maskinvert_checkBox.isChecked()
 
-    def pause(self):
-        if self.videopath != 0:
-            if self.ui.pausebutton.isChecked():
-                self.tracker._play_flag = False
-                self.ui.pausebutton.setText("Play")
-              
-            else:#play
-                self.tracker._play_flag = True
-                self.ui.pausebutton.setText("Pause")
-                
-    def frameright(self):
-        if self.videopath != 0:
-            self.tracker.framenum+=1
-            self.ui.frameslider.setValue(self.tracker.framenum)
-            self.ui.framelabel.setText("Frame:"+str(self.tracker.framenum))
-
-    def frameleft(self):
-        if self.videopath != 0:
-            self.tracker.framenum-=1
-            self.ui.frameslider.setValue(self.tracker.framenum)
-            self.ui.framelabel.setText("Frame:"+str(self.tracker.framenum))
 
     
     

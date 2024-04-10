@@ -11,9 +11,7 @@ class algorithm:
         for bot_num in range(len(robot_list)):
             robot = robot_list[bot_num]
             pos = robot.position_list[-1]
-            print("robot {} pos = {}".format(bot_num, pos))
-        
-        print("\n\n")
+            
 
         
         #middle: define a trajectory
