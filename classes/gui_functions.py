@@ -155,6 +155,7 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.excel_actions_status = False
             self.ui.apply_actions.setText("Apply")
+            self.arduino.send(0,0,0,0,0,0,0,0,0)
 
     
 
