@@ -484,3 +484,8 @@ class LearningModule:
 
 
 
+
+
+gp_sim = LearningModule()
+
+gp_sim.load_GP()
