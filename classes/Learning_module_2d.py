@@ -32,9 +32,10 @@ def objective(X, a0, v_d, GPx, GPy):
 class LearningModule:
     def __init__(self):
         # kernel list is the kernel cookbook from scikit-learn
-        matern_kernel = Matern(length_scale=1.0, length_scale_bounds=(1e-2, 100.0), nu=1.5)
+        
+        kernel = ConstantKernel(1.0, (1e-2, 500.0))* RBF(length_scale=1.0, length_scale_bounds=(1e-2, 500.0)) + WhiteKernel()
 
-        kernel = ConstantKernel(1.1, (1e-2, 1e2))* RBF(length_scale=1.0, length_scale_bounds=(1e-2, 100.0)) + WhiteKernel()
+        # kernel = ConstantKernel(1.1, (1e-2, 1e2))* RBF(length_scale=1.0, length_scale_bounds=(1e-2, 100.0)) + WhiteKernel()
         #create the X and Y GP regression objects
         self.gprX = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10)
         self.gprY = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10)
@@ -418,6 +419,42 @@ class LearningModule:
         #plt.title('Y Axis Learning')
         #plt.xlabel("alpha")
         #plt.ylabel("V_e^x")
+    def visualize_mu(self, alpha_grid, freq_grid ,vx_grid, vy_grid):
+        error_x = vx_grid - self.a0 * freq_grid * np.sin(alpha_grid)
+        error_y = vy_grid - self.a0 * freq_grid * np.cos(alpha_grid)
+        
+
+        X = np.vstack((alpha_grid.ravel(), freq_grid.ravel())).T
+        # for ix in range(alpha_grid.shape[0]):
+        #     for iy in range(alpha_grid.shape[1]):
+        #         X = np.vstack([[alpha_grid[ix][iy]], [freq_grid[ix][iy]]] ).transpose()
+              
+
+        #         #evaluate the GPs
+        muX,sigX = self.gprX.predict(X, return_std=True)
+        muY,sigY = self.gprY.predict(X, return_std=True)
+        gp_est_x = muX.reshape(alpha_grid.shape)
+        gp_est_y = muY.reshape(alpha_grid.shape)
+        # Create a new figure for plotting
+        fig = plt.figure()
+        
+
+        # Plotting the surface
+        ax1 = fig.add_subplot(121, projection='3d')  # Changed from 111 to 121 for 1 row, 2 cols, 1st subplot
+        # surface1 = ax1.plot_surface(alpha_grid, freq_grid, error_x, cmap='viridis')
+        surface11 = ax1.plot_surface(alpha_grid, freq_grid, np.abs(gp_est_x-error_x)/np.abs(error_x), cmap='viridis')
+        fig.colorbar(surface11, shrink=0.5, aspect=5)
+        ax1.set_title('gpX')
+        ax1.set_zlim(0,10)
+
+        # Second subplot
+        ax2 = fig.add_subplot(122, projection='3d')  # Changed to 122 for 1 row, 2 cols, 2nd subplot
+        # surface2 = ax2.plot_surface(alpha_grid, freq_grid, error_y, cmap='viridis')
+        surface2 = ax2.plot_surface(alpha_grid, freq_grid, np.abs(error_y-gp_est_y)/np.abs(error_y), cmap='viridis')
+        fig.colorbar(surface2, shrink=0.5, aspect=5)
+        ax2.set_zlim(0,10)
+        plt.show()
+
         
 
     def error(self, vd):
@@ -484,8 +521,3 @@ class LearningModule:
 
 
 
-
-
-gp_sim = LearningModule()
-
-gp_sim.load_GP()
