@@ -33,7 +33,7 @@ class LearningModule:
     def __init__(self):
         # kernel list is the kernel cookbook from scikit-learn
         
-        kernel = ConstantKernel(1.0, (1e-2, 500.0))* RBF(length_scale=1.0, length_scale_bounds=(1e-2, 500.0)) + WhiteKernel()
+        kernel = ConstantKernel(1.0, (1e-2, 500.0))* RBF(length_scale=1.0, length_scale_bounds=(1e-2, 500.0)) + ConstantKernel(1.0, (1e-2, 500.0))*WhiteKernel()
 
         # kernel = ConstantKernel(1.1, (1e-2, 1e2))* RBF(length_scale=1.0, length_scale_bounds=(1e-2, 100.0)) + WhiteKernel()
         #create the X and Y GP regression objects
@@ -207,8 +207,8 @@ class LearningModule:
         self.X = X; self.Yx = Yx; self.Yy = Yy
         
         self.freq = freq
-        joblib.dump(self.gprX, 'gpX_2d.pkl')
-        joblib.dump(self.gprY, 'gpY_2d.pkl')
+        joblib.dump(self.gprX, 'classes/gpX_2d.pkl')
+        joblib.dump(self.gprY, 'classes/gpY_2d.pkl')
 
         # return a0
 
