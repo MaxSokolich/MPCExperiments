@@ -1,11 +1,11 @@
 
 import numpy as np
 import sys
-import Learning_module_2d as GP # type: ignore
+import classes.Learning_module_2d as GP # type: ignore
 
 
 import math 
-from MPC import  MPC
+from classes.MPC import  MPC
 
 
 class algorithm:

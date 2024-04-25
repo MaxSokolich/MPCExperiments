@@ -52,8 +52,8 @@ class LearningModule:
 
     
     def load_GP(self):
-        self.gprY = joblib.load('gpY_2d.pkl')
-        self.gprX = joblib.load('gpX_2d.pkl')
+        self.gprY = joblib.load('classes/gpY_2d.pkl')
+        self.gprX = joblib.load('classes/gpX_2d.pkl')
         print('GP is loaded')
 
     def visualize_mu(self, alpha_grid, freq_grid ,vx_grid, vy_grid):
