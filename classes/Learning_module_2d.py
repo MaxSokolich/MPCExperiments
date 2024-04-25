@@ -34,7 +34,7 @@ class LearningModule:
         # kernel list is the kernel cookbook from scikit-learn
         matern_kernel = Matern(length_scale=1.0, length_scale_bounds=(1e-2, 100.0), nu=1.5)
 
-        kernel = ConstantKernel(1.0, (1e-2, 1e2))* RBF(length_scale=1.0, length_scale_bounds=(1e-2, 100.0)) + WhiteKernel()
+        kernel = ConstantKernel(1.1, (1e-2, 1e2))* RBF(length_scale=1.0, length_scale_bounds=(1e-2, 100.0)) + WhiteKernel()
         #create the X and Y GP regression objects
         self.gprX = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10)
         self.gprY = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=10)
