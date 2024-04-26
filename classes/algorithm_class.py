@@ -15,25 +15,29 @@ class algorithm:
         self.gp_sim = GP.LearningModule()
 
         self.gp_sim.load_GP()
-        self.a0_sim = np.load('a0_est.npy')
+        self.a0_sim = np.load('classes/a0_est.npy')
 
         # freq = 4
         # a0_def = 1.5
-        self.dt = 0.030 #assume a timestep of 30 ms
+        self.dt = 0.040 #assume a timestep of 30 ms
 
+        x0 = 2200
+        y0 = 1800
 
-        #### ref Trjactory
+        r = 100
+        center_x = x0 -r
+        center_y = y0
+        time_steps = 500
 
-
-        #########Ref Trajectory
-
-        node_ls = np.load('node_path.npy')
-        node_ls[3] = np.array([1500, 1600])
-        node_ls = np.delete(node_ls, 1, 0)
-        gpath_planner_traj = self.generate_in_between_points(node_ls)
-        self.ref = gpath_planner_traj
-        np.save('ref.npy', self.ref)
-        # ref = np.load('ref.npy')
+        theta_ls = np.linspace(0, 2*np.pi,time_steps)
+        x_ls = center_x + r*(np.cos(theta_ls))
+        y_ls = center_y+ r*np.sin(theta_ls)
+        ref = np.ones((time_steps,2))
+        ref[:,0]= x_ls
+        ref[:,1]= y_ls
+        
+        self.ref = ref
+        print(self.ref)
 
         time_steps = len(self.ref)
 
@@ -47,7 +51,7 @@ class algorithm:
         # Weight matrices for state and input
         Q = np.array([[1,0],[0,1]])
         self.R = 0.01*np.array([[1,0],[0,1]])
-        self.N = 2
+        self.N = 1
         self.mpc = MPC(A= A, B=B, ref=self.ref, N=self.N, Q=Q, R=self.R)
 
 
@@ -60,7 +64,74 @@ class algorithm:
         self.freq_t =0
         self.counter = 0
         self.time_range = 200 #frames
+
+        #### ref Trjactory
+
+
+        #########Ref Trajectory
+
+        """node_ls = np.load('classes/node_path.npy')
+        node_ls[3] = np.array([1500, 1600])
+        node_ls = np.delete(node_ls, 1, 0)
+        gpath_planner_traj = self.generate_in_between_points(node_ls)
+        self.ref = gpath_planner_traj
+        np.save('ref.npy', self.ref)"""
+        # ref = np.load('ref.npy')
+        
+
+        
     
+    
+    def generate_traj(self, robot_list):
+        microrobot_latest_position_x = robot_list[-1].position_list[-1][0]
+        microrobot_latest_position_y = robot_list[-1].position_list[-1][1]
+
+        x0 = microrobot_latest_position_x
+        y0 = microrobot_latest_position_y
+
+        r = 100
+        center_x = x0 -r
+        center_y = y0
+        time_steps = 500
+
+        theta_ls = np.linspace(0, 2*np.pi,time_steps)
+        x_ls = center_x + r*(np.cos(theta_ls))
+        y_ls = center_y+ r*np.sin(theta_ls)
+        ref = np.ones((time_steps,2))
+        ref[:,0]= x_ls
+        ref[:,1]= y_ls
+        
+        self.ref = ref
+        print(self.ref)
+
+        time_steps = len(self.ref)
+
+
+        x0 = [self.ref[0,0],self.ref[0,1]]
+
+
+        ########MPC parameters
+        B  = self.a0_sim*self.dt*np.array([[1,0],[0,1]])
+        A = np.eye(2)
+        # Weight matrices for state and input
+        Q = np.array([[1,0],[0,1]])
+        self.R = 0.01*np.array([[1,0],[0,1]])
+        self.N = 1
+        self.mpc = MPC(A= A, B=B, ref=self.ref, N=self.N, Q=Q, R=self.R)
+
+
+        x_traj = np.zeros((time_steps+1, 2))  # +1 to include initial state
+
+        u_traj = np.zeros((time_steps, 2))
+        x_traj[0, :] = x0
+
+        self.alpha_t = 0
+        self.freq_t =0
+        self.counter = 0
+        self.time_range = 200 #frames
+
+
+
     def generate_in_between_points(self, node_ls):
         """
         Generates in-between points for a given list of segment endpoints.
@@ -100,6 +171,7 @@ class algorithm:
 
     def run(self, robot_list): #this executes at every frame
         
+
         
         self.counter += 1
 
@@ -118,12 +190,16 @@ class algorithm:
         
         #microrobot_latest_position = x_traj[t, :]
         
+        
         #define robot position
         microrobot_latest_position_x = robot_list[-1].position_list[-1][0]
         microrobot_latest_position_y = robot_list[-1].position_list[-1][1]
-        microrobot_latest_position = [microrobot_latest_position_x, microrobot_latest_position_y] 
+        microrobot_latest_position = np.array([microrobot_latest_position_x, 
+                                               microrobot_latest_position_y]).reshape([2,1])
         
-        u_mpc , pred_traj = self.mpc.control_cvx(microrobot_latest_position, current_ref, (v_e)*self.dt)
+        #print(microrobot_latest_position)
+        print("X0", microrobot_latest_position)
+        u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, (v_e)*self.dt)
         #x0 = x_traj[t,:] - current_ref[0,:]
 
 
@@ -131,7 +207,7 @@ class algorithm:
         #u_current = u_mpc
         #u_traj[t, :] = u_current # Assuming u_opt is the control input for the next step
         
-        f_t, alpha_t = self.mpc.convert_control(u_mpc)
+        self.f_t, self.alpha_t = self.mpc.convert_control(u_mpc)
         ### f_t and alpha_t must be passed to the system as the control inputs
 
 
@@ -142,10 +218,10 @@ class algorithm:
         By = 0 
         Bz = 0
         alpha = self.alpha_t
-        gamma = 0
+        gamma = np.pi/2
         freq = self.f_t
-        psi = 0
-        gradient = 1 # gradient has to be 1 for the gradient thing to work
+        psi = np.pi/2
+        gradient = 0 # gradient has to be 1 for the gradient thing to work
         acoustic_freq = 0
         
         
