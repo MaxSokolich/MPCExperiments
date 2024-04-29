@@ -50,7 +50,7 @@ class MPC:
         print("B=", self.B)
         # Create a new model
         m = gp.Model("mpc")
-
+        x0 = np.reshape(x0, 2)
         # Decision variables for states and inputs
         x = m.addMVar((self.N+1, self.nx), lb=-GRB.INFINITY, name="x")
         u = m.addMVar((self.N, self.nu), lb= self.umin, ub=self.umax, name="u")
