@@ -270,6 +270,7 @@ class VideoThread(QThread):
         
         
         
+        
         cv2.putText(display_frame,"100 um",
             (int(self.width / 80),int(self.height / 30)),
             cv2.FONT_HERSHEY_SIMPLEX,
@@ -353,13 +354,15 @@ class VideoThread(QThread):
                 self.change_pixmap_signal.emit(displayframe)
                 self.robot_list_signal.emit(self.robot_list)
                 
-                
+                time_between_frames = 1 / self.fps.get_fps()
+          
 
                 #step 4: delay based on fps
-                if self.totalnumframes !=0:
-                    interval = 1/self.videofps  #use original fps used to record the video if not live
-                    time.sleep(interval)
-
+                #if self.totalnumframes !=0:
+                #    interval = 1/self.videofps  #use original fps used to record the video if not live
+                #    time.sleep(interval)
+            else:
+                print("crashed")
     
             
            

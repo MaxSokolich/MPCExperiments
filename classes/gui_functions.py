@@ -134,10 +134,38 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.import_excel_actions.clicked.connect(self.read_excel_actions)
         self.ui.apply_actions.clicked.connect(self.apply_excel_actions)
 
+        self.ui.run_algo.clicked.connect(self.run_algorithm)
+        self.ui.calibrate_button.clicked.connect(self.go_to_start)
         #readomg excel file variables        
         self.excel_file_name = None
         self.excel_actions_df = None
         self.excel_actions_status = False
+
+        self.algorithm_status = False
+        self.calibrate_status = False
+
+    def go_to_start(self):
+        if self.ui.calibrate_button.isChecked():
+            self.calibrate_status = True
+            self.ui.calibrate_button.setText("Stop")
+        else:
+
+            #when I click stop, it stops the calibration
+            #self.algorithm.generate_traj(self.tracker.robot_list)
+            self.calibrate_status = False
+            self.ui.calibrate_button.setText("Calibrate")
+
+        
+
+    def run_algorithm(self):
+        if self.ui.run_algo.isChecked():
+            self.algorithm_status = True
+            self.ui.run_algo.setText("Stop")
+        else:
+
+            self.algorithm_status = False
+            self.ui.run_algo.setText("Apply Algo")
+
 
 
     def read_excel_actions(self):
@@ -170,9 +198,29 @@ class MainWindow(QtWidgets.QMainWindow):
         #Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list)
         #self.arduino.send(Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq)
         #if the apply button is pressed and an excel file has been opened
+        if self.calibrate_status == True:
+                curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
+                endpos = [2200, 1800]
+                print(curernt_pos)
+
+                direction_vec = [endpos[0] - curernt_pos[0], endpos[1] - curernt_pos[1]]
+                error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
+                start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
+                
+                if error < 5:
+                    self.arduino.send(0,0,0,0,0,0,0,0,0)
+                else:
+                    self.arduino.send(0,0,0,start_alpha,np.pi/2,10,np.pi/2,0,0)
         
         
-        if self.excel_actions_status == True and self.excel_actions_df is not None:
+        
+        elif self.algorithm_status == True:
+            if len(robot_list) > 0:
+                Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list)
+                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
+
+
+        elif self.excel_actions_status == True and self.excel_actions_df is not None:
             
             self.actions_counter +=1
 
@@ -195,6 +243,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.ui.apply_actions.setText("Apply")
                 self.ui.apply_actions.setChecked(False)
                 self.arduino.send(0,0,0,0,0,0,0,0,0)
+        else:
+            self.arduino.send(0,0,0,0,0,0,0,0,0)  #zeros everything
             
         
         
@@ -221,33 +271,6 @@ class MainWindow(QtWidgets.QMainWindow):
             for (sheet, bot) in zip(self.robot_params_sheets,self.robots):
                 sheet.append(bot[:-1])
       
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     def start_data_record(self):
@@ -385,6 +408,9 @@ class MainWindow(QtWidgets.QMainWindow):
         frame = self.handle_zoom(frame)
     
         self.currentframe = frame
+
+        cv2.circle(frame,(int(2200), int(1800)),20,(0,0,0), -1,)
+
         rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         h, w, ch = rgb_image.shape
       
