@@ -45,7 +45,7 @@ class VideoThread(QThread):
         self.robot_mask_upper = 128
         self.robot_mask_dilation = 0  
         self.robot_mask_blur = 0
-        self.robot_crop_length = 40
+        self.robot_crop_length = 110
         self.robot_mask_flag = True
         self.robot_list = []
 
@@ -354,7 +354,8 @@ class VideoThread(QThread):
                 self.change_pixmap_signal.emit(displayframe)
                 self.robot_list_signal.emit(self.robot_list)
                 
-                time_between_frames = 1 / self.fps.get_fps()
+                # time_between_frames = 1 / self.fps.get_fps()
+                # print("dt ==========", time_between_frames)
           
 
                 #step 4: delay based on fps

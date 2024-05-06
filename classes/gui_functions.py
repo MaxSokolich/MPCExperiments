@@ -165,6 +165,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             self.algorithm_status = False
             self.ui.run_algo.setText("Apply Algo")
+            self.algorithm.reset()
 
 
 
@@ -199,18 +200,19 @@ class MainWindow(QtWidgets.QMainWindow):
         #self.arduino.send(Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq)
         #if the apply button is pressed and an excel file has been opened
         if self.calibrate_status == True:
-                curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
-                endpos = [2200, 1800]
-                print(curernt_pos)
+                if len(robot_list) > 0:
+                    curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
+                    endpos = [1000, 1000]
+                    print(curernt_pos)
 
-                direction_vec = [endpos[0] - curernt_pos[0], endpos[1] - curernt_pos[1]]
-                error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
-                start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
-                
-                if error < 5:
-                    self.arduino.send(0,0,0,0,0,0,0,0,0)
-                else:
-                    self.arduino.send(0,0,0,start_alpha,np.pi/2,10,np.pi/2,0,0)
+                    direction_vec = [endpos[0] - curernt_pos[0], endpos[1] - curernt_pos[1]]
+                    error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
+                    start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
+                    
+                    if error < 5:
+                        self.arduino.send(0,0,0,0,0,0,0,0,0)
+                    else:
+                        self.arduino.send(0,0,0,start_alpha,np.pi/2,10,np.pi/2,0,0)
         
         
         
@@ -409,7 +411,7 @@ class MainWindow(QtWidgets.QMainWindow):
     
         self.currentframe = frame
 
-        cv2.circle(frame,(int(2200), int(1800)),20,(0,0,0), -1,)
+        cv2.circle(frame,(int(1500), int(1500)),10,(0,0,255), -1,)
 
         rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         h, w, ch = rgb_image.shape
@@ -505,6 +507,8 @@ class MainWindow(QtWidgets.QMainWindow):
             try:
                 self.cap  = EasyPySpin.VideoCapture(0)
                 self.cap.set(cv2.CAP_PROP_AUTO_WB, True)
+                self.cap.set(cv2.CAP_PROP_FPS, 10)
+                print("flir cam detected")
             except Exception:
                 self.cap  = cv2.VideoCapture(0) 
                 self.tbprint("No EasyPySpin Camera Available")
