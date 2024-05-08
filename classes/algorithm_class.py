@@ -358,12 +358,18 @@ class algorithm:
 
         return path
 
+<<<<<<< HEAD
     def run(self, robot_list): #this executes at every frame
         
         #cv2.circle(frame,(int(1500), int(1500)),10,(0,0,255), -1,)
         self.robot_list = robot_list
+=======
+>>>>>>> dd2d20819c6e94a3695ca39db9967852715bba1c
 
-        
+
+
+    def run(self, robot_list): #this executes at every frame
+
         self.counter += 1
 
         current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
