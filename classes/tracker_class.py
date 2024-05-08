@@ -11,7 +11,7 @@ from classes.fps_class import FPSCounter
     
 #add unique crop length 
 class VideoThread(QThread):
-    change_pixmap_signal = pyqtSignal(np.ndarray)
+    change_pixmap_signal = pyqtSignal(np.ndarray, list)
     cropped_frame_signal = pyqtSignal(np.ndarray,np.ndarray)
     robot_list_signal = pyqtSignal(list)
 
@@ -351,7 +351,7 @@ class VideoThread(QThread):
                 
                 #step 3: emit croppedframe, frame from this thread to the main thread
                 self.cropped_frame_signal.emit(croppedmask, recorded_cropped_frame)
-                self.change_pixmap_signal.emit(displayframe)
+                self.change_pixmap_signal.emit(displayframe, self.robot_list)
                 self.robot_list_signal.emit(self.robot_list)
                 
                 # time_between_frames = 1 / self.fps.get_fps()

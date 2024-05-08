@@ -356,10 +356,11 @@ class algorithm:
 
         return path
 
-    def run(self, robot_list): #this executes at every frame
-        self.robot_list = robot_list
 
-        
+
+
+    def run(self, robot_list): #this executes at every frame
+
         self.counter += 1
 
         current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
