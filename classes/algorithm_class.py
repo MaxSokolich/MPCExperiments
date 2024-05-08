@@ -7,6 +7,8 @@ from classes.MR_simulator import Simulator
 import math 
 from classes.MPC import  MPC
 import matplotlib.pyplot as plt
+import cv2
+
 
 class algorithm:
     def __init__(self):
@@ -14,7 +16,7 @@ class algorithm:
         
         self.gp_sim = GP.LearningModule()
 
-        self.gp_sim.load_GP()
+        # self.gp_sim.load_GP()
         self.a0_sim = np.load('classes/a0_est.npy')
 
         # freq = 4
@@ -357,6 +359,8 @@ class algorithm:
         return path
 
     def run(self, robot_list): #this executes at every frame
+        
+        #cv2.circle(frame,(int(1500), int(1500)),10,(0,0,255), -1,)
         self.robot_list = robot_list
 
         
@@ -369,9 +373,9 @@ class algorithm:
             current_ref = np.vstack((current_ref, np.ones((self.N-current_ref.shape[0], 1)) * self.ref[-1, :]))
 
         ### Disturbance Compensator 
-        muX,sigX = self.gp_sim.gprX.predict(np.array([[self.alpha_t, self.freq_t]]), return_std=True)
-        muY,sigY = self.gp_sim.gprY.predict(np.array([[self.alpha_t, self.freq_t]]), return_std=True)
-        v_e = np.array([muX[0], muY[0]])
+        # muX,sigX = self.gp_sim.gprX.predict(np.array([[self.alpha_t, self.freq_t]]), return_std=True)
+        # muY,sigY = self.gp_sim.gprY.predict(np.array([[self.alpha_t, self.freq_t]]), return_std=True)
+        # v_e = np.array([muX[0], muY[0]])
         
         Qz = 0*self.R
         
@@ -399,6 +403,7 @@ class algorithm:
         u_mpc , pred_traj = self.mpc.control_gurobi(x0 = microrobot_latest_position, ref =path, Dist=0)
         print()
         self.umpc_history.append(u_mpc)
+        
         #x0 = x_traj[t,:] - current_ref[0,:]
 
 
