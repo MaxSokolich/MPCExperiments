@@ -152,53 +152,6 @@
      <property name="frameShadow">
       <enum>QFrame::Raised</enum>
      </property>
-     <widget class="QPushButton" name="recordbutton">
-      <property name="geometry">
-       <rect>
-        <x>100</x>
-        <y>130</y>
-        <width>111</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">QPushButton {
-                color: rgb(255, 255, 255);
-                background-color: rgb(0, 0, 0);
-                border-style: outset;
-                border-width: 3px;
-                border-radius: 10px;
-                border-color: rgb(0, 0, 0);
-                min-width: 1em;
-                padding: 6px;
-            }
-      
-            QPushButton:checked {
-                color: rgb(255, 255, 255);
-                background-color: rgb(255, 0, 0);
-                border-style: inset;
-                border-width: 3px;
-                border-radius: 10px;
-                border-color: rgb(255, 0, 0);
-                font: bold 16px;
-                min-width: 1em;
-               
-            }
-            QPushButton:hover {
-                background-color: rgb(100, 100, 100);
-                color: rgb(255, 255, 255);
-                border-color: rgb(100, 100, 100);
-                padding-left: 5px;
-                padding-top: 5px;
-            }</string>
-      </property>
-      <property name="text">
-       <string>Record Video</string>
-      </property>
-      <property name="checkable">
-       <bool>true</bool>
-      </property>
-     </widget>
      <widget class="QPushButton" name="trackbutton">
       <property name="geometry">
        <rect>
@@ -275,7 +228,7 @@ QPushButton {
        <rect>
         <x>20</x>
         <y>190</y>
-        <width>111</width>
+        <width>71</width>
         <height>35</height>
        </rect>
       </property>
@@ -298,7 +251,7 @@ QPushButton {
      <widget class="QLabel" name="objectivelabel">
       <property name="geometry">
        <rect>
-        <x>180</x>
+        <x>110</x>
         <y>170</y>
         <width>111</width>
         <height>25</height>
@@ -317,9 +270,9 @@ QPushButton {
      <widget class="QSpinBox" name="objectivebox">
       <property name="geometry">
        <rect>
-        <x>180</x>
+        <x>110</x>
         <y>190</y>
-        <width>111</width>
+        <width>71</width>
         <height>35</height>
        </rect>
       </property>
@@ -362,7 +315,7 @@ QPushButton {
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>100</y>
+        <y>140</y>
         <width>51</width>
         <height>21</height>
        </rect>
@@ -374,15 +327,15 @@ QPushButton {
        </size>
       </property>
       <property name="text">
-       <string>step 2:</string>
+       <string>step 3:</string>
       </property>
      </widget>
      <widget class="QPushButton" name="run_algo">
       <property name="geometry">
        <rect>
         <x>70</x>
-        <y>90</y>
-        <width>181</width>
+        <y>130</y>
+        <width>171</width>
         <height>31</height>
        </rect>
       </property>
@@ -476,6 +429,124 @@ QPushButton {
       </property>
       <property name="text">
        <string>Generate Data</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="calibrate_button">
+      <property name="geometry">
+       <rect>
+        <x>70</x>
+        <y>90</y>
+        <width>181</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="cursor">
+       <cursorShape>ArrowCursor</cursorShape>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">
+QPushButton {
+                color: rgb(255, 255, 255);
+                background-color: rgb(0, 0, 255);
+                border-style: outset;
+                border-width: 3px;
+                border-radius: 10px;
+                border-color: rgb(0, 0, 255);
+                min-width: 1em;
+                padding: 6px;
+			  font: bold 15px;
+            }
+      
+            QPushButton:checked {
+                color: rgb(255, 255, 255);
+                background-color: rgb(255, 0, 0);
+                border-style: inset;
+                border-width: 3px;
+                border-radius: 10px;
+                border-color: rgb(255, 0, 0);
+                font: bold 25px;
+                min-width: 1em;
+               
+            }
+            QPushButton:hover {
+                background-color: rgb(100, 100, 100);
+                color: rgb(255, 255, 255);
+                border-color: rgb(0, 255, 0);
+                padding-left: 5px;
+                padding-top: 5px;
+            }</string>
+      </property>
+      <property name="text">
+       <string>Calibrate</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="framelabel_4">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>100</y>
+        <width>51</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>300</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>step 2:</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="recordbutton">
+      <property name="geometry">
+       <rect>
+        <x>190</x>
+        <y>190</y>
+        <width>111</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QPushButton {
+                color: rgb(255, 255, 255);
+                background-color: rgb(0, 0, 0);
+                border-style: outset;
+                border-width: 3px;
+                border-radius: 10px;
+                border-color: rgb(0, 0, 0);
+                min-width: 1em;
+                padding: 6px;
+            }
+      
+            QPushButton:checked {
+                color: rgb(255, 255, 255);
+                background-color: rgb(255, 0, 0);
+                border-style: inset;
+                border-width: 3px;
+                border-radius: 10px;
+                border-color: rgb(255, 0, 0);
+                font: bold 16px;
+                min-width: 1em;
+               
+            }
+            QPushButton:hover {
+                background-color: rgb(100, 100, 100);
+                color: rgb(255, 255, 255);
+                border-color: rgb(100, 100, 100);
+                padding-left: 5px;
+                padding-top: 5px;
+            }</string>
+      </property>
+      <property name="text">
+       <string>Record Video</string>
       </property>
       <property name="checkable">
        <bool>true</bool>
