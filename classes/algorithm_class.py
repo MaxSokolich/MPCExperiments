@@ -22,39 +22,46 @@ class algorithm:
 
         # freq = 4
         # a0_def = 1.5
-        self.dt = 0.1 #assume a timestep of 30 ms
+        self.dt = 1/10 #assume a timestep of 30 ms
 
         x0 = 1200
         y0 = 1300
 
-        
-        center_x = x0 
-        center_y = y0
-        tx = 100
-        ty = 100
-        time_steps = 300
-        t =np.linspace(0, 2*np.pi,time_steps)
-        x_ls = center_x +tx*t
-        y_ls = center_y+ ty*t
-        ref = np.ones((time_steps,2))
-        ref[:,0]= x_ls
-        ref[:,1]= y_ls
-        r = 400
-        theta_ls = np.linspace(0, 2*np.pi,time_steps)
-        x_ls = center_x + r*(np.cos(theta_ls))
-        y_ls = center_y+ r*np.sin(theta_ls)
-        ref = np.ones((time_steps,2))
-        ref[:,0]= x_ls
-        ref[:,1]= y_ls
-        self.init_point_x = ref[0,0]
-        self.init_point_y = ref[0, 1]
-        # node_ls = np.load('classes/node_path.npy')
+        #######creating circle
+        # center_x = x0 
+        # center_y = y0
+        # tx = 100
+        # ty = 100
+        # time_steps = 300
+        # t =np.linspace(0, 2*np.pi,time_steps)
+        # x_ls = center_x +tx*t
+        # y_ls = center_y+ ty*t
+        # ref = np.ones((time_steps,2))
+        # ref[:,0]= x_ls
+        # ref[:,1]= y_ls
+        # r = 400
+        # theta_ls = np.linspace(0, 2*np.pi,time_steps)
+        # x_ls = center_x + r*(np.cos(theta_ls))
+        # y_ls = center_y+ r*np.sin(theta_ls)
+        # ref = np.ones((time_steps,2))
+        # ref[:,0]= x_ls
+        # ref[:,1]= y_ls
+        # self.ref = ref
+
+
+       
+        node_ls = np.load('classes/node_path.npy')
         # node_ls[3] = np.array([1500, 1600])
         # node_ls = np.delete(node_ls, 1, 0)
-        # gpath_planner_traj = self.generate_in_between_points(node_ls)
-        # self.ref = gpath_planner_traj
+        gpath_planner_traj = self.generate_in_between_points(node_ls)
+        self.ref = gpath_planner_traj
         # ref = np.load('classes')
-        self.ref = ref
+
+
+         
+        self.init_point_x = self.ref[0,0]
+        self.init_point_y = self.ref[0, 1]
+        
         print('whole ref_shape =', self.ref.shape)
         #print(self.ref)
 
@@ -69,9 +76,9 @@ class algorithm:
         A = np.eye(2)
         # Weight matrices for state and input
         Q = np.array([[1,0],[0,1]])
-        self.R = 0.01*np.array([[1,0],[0,1]])
+        R = 0.01*np.array([[1,0],[0,1]])
         self.N = 10
-        self.mpc = MPC(A= A, B=B, N=self.N, Q=Q, R=self.R)
+        self.mpc = MPC(A= A, B=B, N=self.N, Q=Q, R=R)
 
 
         x_traj = np.zeros((time_steps+1, 2))  # +1 to include initial state
@@ -333,7 +340,7 @@ class algorithm:
         for i in range(len(node_ls)-1):
             start_point, end_point = node_ls[i], node_ls[i+1]
             length = np.linalg.norm(end_point-start_point)
-            num_points_per_segment= int(2*length/2)
+            num_points_per_segment= int(1.2*length/5)
             # Generate a sequence of numbers between 0 and 1, which will serve as interpolation factors.
             interpolation_factors = np.linspace(0, 1, num_points_per_segment + 2)
             
@@ -369,9 +376,9 @@ class algorithm:
         self.counter += 1
 
         cv2.circle(frame,(self.goal[0], self.goal[1]),20,(0,0,0), -1)
-        ref = robot_list[-1].trajectory
-        ref = np.reshape(np.array(ref), [len(ref),2])
-        self.ref = ref
+        # ref = robot_list[-1].trajectory
+        # ref = np.reshape(np.array(ref), [len(ref),2])
+        # self.ref = ref
         current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
 
         if current_ref.shape[0] < self.N:
@@ -383,7 +390,7 @@ class algorithm:
         # muY,sigY = self.gp_sim.gprY.predict(np.array([[self.alpha_t, self.freq_t]]), return_std=True)
         # v_e = np.array([muX[0], muY[0]])
         
-        Qz = 0*self.R
+        
         
         #microrobot_latest_position = x_traj[t, :]
         
@@ -459,8 +466,8 @@ class algorithm:
         
 
         #plot pred traj pts pts
-        # pred_traj_pts = np.array(pred_traj, np.int32)
-        # cv2.polylines(frame, [pred_traj_pts], False, (0, 0, 255), 6)
+        pred_traj_pts = np.array(pred_traj, np.int32)
+        cv2.polylines(frame, [pred_traj_pts], False, (0, 0, 255), 6)
 
         
         
