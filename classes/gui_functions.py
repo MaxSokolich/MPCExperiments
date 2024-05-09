@@ -136,7 +136,7 @@ class MainWindow(QtWidgets.QMainWindow):
         #self.ui.apply_actions.clicked.connect(self.apply_excel_actions)
         self.ui.generate_data_button.clicked.connect(self.generate_data_function)
         self.ui.run_algo.clicked.connect(self.run_algorithm)
-        #self.ui.calibrate_button.clicked.connect(self.go_to_start)
+        self.ui.calibrate_button.clicked.connect(self.go_to_start)
         #readomg excel file variables        
         self.excel_file_name = None
         self.excel_actions_df = None
