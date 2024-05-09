@@ -110,7 +110,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.output_workbook = None
         
 
-        self.setFile()
+        
      
         self.ui.trackbutton.clicked.connect(self.track)
         self.ui.maskbutton.clicked.connect(self.showmask)
@@ -546,6 +546,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def track(self):
         if self.videopath is not None:
             if self.ui.trackbutton.isChecked():
+                self.setFile()
                     
                 self.tracker = VideoThread(self)
                 self.tracker.change_pixmap_signal.connect(self.update_image)
