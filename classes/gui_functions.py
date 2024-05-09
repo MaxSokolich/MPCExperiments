@@ -124,7 +124,7 @@ class MainWindow(QtWidgets.QMainWindow):
       
 
 
-        self.ui.savedatabutton.clicked.connect(self.savedata)
+        #self.ui.savedatabutton.clicked.connect(self.savedata)
         self.ui.VideoFeedLabel.installEventFilter(self)
         self.ui.recordbutton.clicked.connect(self.recordfunction_class)
         self.ui.resetdefaultbutton.clicked.connect(self.resetparams)
@@ -132,11 +132,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.exposurebox.valueChanged.connect(self.get_exposure)
         self.ui.croppedmasktoggle.clicked.connect(self.showcroppedoriginal)
         self.ui.croppedrecordbutton.clicked.connect(self.croppedrecordfunction)
-        self.ui.import_excel_actions.clicked.connect(self.read_excel_actions)
-        self.ui.apply_actions.clicked.connect(self.apply_excel_actions)
-
+        #self.ui.import_excel_actions.clicked.connect(self.read_excel_actions)
+        #self.ui.apply_actions.clicked.connect(self.apply_excel_actions)
+        self.ui.generate_data_button.clicked.connect(self.generate_data_function)
         self.ui.run_algo.clicked.connect(self.run_algorithm)
-        self.ui.calibrate_button.clicked.connect(self.go_to_start)
+        #self.ui.calibrate_button.clicked.connect(self.go_to_start)
         #readomg excel file variables        
         self.excel_file_name = None
         self.excel_actions_df = None
@@ -144,6 +144,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.algorithm_status = False
         self.calibrate_status = False
+        self.generate_data_status = False
 
     def go_to_start(self):
         if self.ui.calibrate_button.isChecked():
@@ -157,6 +158,16 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.calibrate_button.setText("Calibrate")
 
         
+    def generate_data_function(self):
+        if self.ui.generate_data_button.isChecked():
+            self.generate_data_status = True
+            self.ui.generate_data_button.setText("Stop")
+        else:
+
+            self.generate_data_status = False
+            self.ui.generate_data_button.setText("Generate Data")
+      
+
 
     def run_algorithm(self):
         if self.ui.run_algo.isChecked():
@@ -321,6 +332,10 @@ class MainWindow(QtWidgets.QMainWindow):
         return super().eventFilter(object, event)
             
             
+
+
+
+
     def update_image(self, frame, robot_list):
         """Updates the image_label with a new opencv image"""
         if self.calibrate_status == True:
@@ -339,6 +354,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.arduino.send(0,0,0,start_alpha,np.pi/2,10,np.pi/2,0,0)
         
         
+
+
         
         elif self.algorithm_status == True:
             if len(robot_list) > 0:
@@ -416,16 +433,16 @@ class MainWindow(QtWidgets.QMainWindow):
         qt_img = QPixmap.fromImage(p)
        
         #update frame slider too
-        self.ui.framelabel.setText("Frame:"+str(self.frame_number))
-        if self.videopath !=0:
-            self.ui.frameslider.setValue(self.tracker.framenum)
+        #("Frame:"+str(self.frame_number))
+        #if self.videopath !=0:
+        #    self.ui.frameslider.setValue(self.tracker.framenum)
         
         #also update robot info
-        if len(self.robots) > 0:
-            robot_diameter = round(np.sqrt(4*self.robots[-1][8]/np.pi),1)
-            self.ui.vellcdnum.display(int(self.robots[-1][6]))
-            self.ui.blurlcdnum.display(int(self.robots[-1][7]))
-            self.ui.sizelcdnum.display(robot_diameter)
+        #if len(self.robots) > 0:
+        #    robot_diameter = round(np.sqrt(4*self.robots[-1][8]/np.pi),1)
+        #    self.ui.vellcdnum.display(int(self.robots[-1][6]))
+        #    self.ui.blurlcdnum.display(int(self.robots[-1][7]))
+        #    self.ui.sizelcdnum.display(robot_diameter)
                 
        
         self.ui.VideoFeedLabel.setPixmap(qt_img)
