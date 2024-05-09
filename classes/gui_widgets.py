@@ -77,39 +77,6 @@ class Ui_MainWindow(object):
         self.frame_3.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame_3.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame_3.setObjectName("frame_3")
-        self.recordbutton = QtWidgets.QPushButton(self.frame_3)
-        self.recordbutton.setGeometry(QtCore.QRect(100, 130, 111, 31))
-        self.recordbutton.setStyleSheet("QPushButton {\n"
-"                color: rgb(255, 255, 255);\n"
-"                background-color: rgb(0, 0, 0);\n"
-"                border-style: outset;\n"
-"                border-width: 3px;\n"
-"                border-radius: 10px;\n"
-"                border-color: rgb(0, 0, 0);\n"
-"                min-width: 1em;\n"
-"                padding: 6px;\n"
-"            }\n"
-"      \n"
-"            QPushButton:checked {\n"
-"                color: rgb(255, 255, 255);\n"
-"                background-color: rgb(255, 0, 0);\n"
-"                border-style: inset;\n"
-"                border-width: 3px;\n"
-"                border-radius: 10px;\n"
-"                border-color: rgb(255, 0, 0);\n"
-"                font: bold 16px;\n"
-"                min-width: 1em;\n"
-"               \n"
-"            }\n"
-"            QPushButton:hover {\n"
-"                background-color: rgb(100, 100, 100);\n"
-"                color: rgb(255, 255, 255);\n"
-"                border-color: rgb(100, 100, 100);\n"
-"                padding-left: 5px;\n"
-"                padding-top: 5px;\n"
-"            }")
-        self.recordbutton.setCheckable(True)
-        self.recordbutton.setObjectName("recordbutton")
         self.trackbutton = QtWidgets.QPushButton(self.frame_3)
         self.trackbutton.setGeometry(QtCore.QRect(10, 5, 291, 41))
         self.trackbutton.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
@@ -151,7 +118,7 @@ class Ui_MainWindow(object):
         self.exposurelabel.setMaximumSize(QtCore.QSize(150, 25))
         self.exposurelabel.setObjectName("exposurelabel")
         self.exposurebox = QtWidgets.QSpinBox(self.frame_3)
-        self.exposurebox.setGeometry(QtCore.QRect(20, 190, 111, 35))
+        self.exposurebox.setGeometry(QtCore.QRect(20, 190, 71, 35))
         self.exposurebox.setMinimum(100)
         self.exposurebox.setMaximum(30000)
         self.exposurebox.setSingleStep(100)
@@ -159,11 +126,11 @@ class Ui_MainWindow(object):
         self.exposurebox.setDisplayIntegerBase(10)
         self.exposurebox.setObjectName("exposurebox")
         self.objectivelabel = QtWidgets.QLabel(self.frame_3)
-        self.objectivelabel.setGeometry(QtCore.QRect(180, 170, 111, 25))
+        self.objectivelabel.setGeometry(QtCore.QRect(110, 170, 111, 25))
         self.objectivelabel.setMaximumSize(QtCore.QSize(150, 25))
         self.objectivelabel.setObjectName("objectivelabel")
         self.objectivebox = QtWidgets.QSpinBox(self.frame_3)
-        self.objectivebox.setGeometry(QtCore.QRect(180, 190, 111, 35))
+        self.objectivebox.setGeometry(QtCore.QRect(110, 190, 71, 35))
         self.objectivebox.setMinimum(1)
         self.objectivebox.setMaximum(50)
         self.objectivebox.setSingleStep(5)
@@ -175,11 +142,11 @@ class Ui_MainWindow(object):
         self.framelabel_2.setMaximumSize(QtCore.QSize(300, 25))
         self.framelabel_2.setObjectName("framelabel_2")
         self.framelabel_3 = QtWidgets.QLabel(self.frame_3)
-        self.framelabel_3.setGeometry(QtCore.QRect(20, 100, 51, 21))
+        self.framelabel_3.setGeometry(QtCore.QRect(20, 140, 51, 21))
         self.framelabel_3.setMaximumSize(QtCore.QSize(300, 25))
         self.framelabel_3.setObjectName("framelabel_3")
         self.run_algo = QtWidgets.QPushButton(self.frame_3)
-        self.run_algo.setGeometry(QtCore.QRect(70, 90, 181, 31))
+        self.run_algo.setGeometry(QtCore.QRect(70, 130, 171, 31))
         self.run_algo.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
         self.run_algo.setStyleSheet("\n"
 "QPushButton {\n"
@@ -250,6 +217,79 @@ class Ui_MainWindow(object):
 "            }")
         self.generate_data_button.setCheckable(True)
         self.generate_data_button.setObjectName("generate_data_button")
+        self.calibrate_button = QtWidgets.QPushButton(self.frame_3)
+        self.calibrate_button.setGeometry(QtCore.QRect(70, 90, 181, 31))
+        self.calibrate_button.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
+        self.calibrate_button.setStyleSheet("\n"
+"QPushButton {\n"
+"                color: rgb(255, 255, 255);\n"
+"                background-color: rgb(0, 0, 255);\n"
+"                border-style: outset;\n"
+"                border-width: 3px;\n"
+"                border-radius: 10px;\n"
+"                border-color: rgb(0, 0, 255);\n"
+"                min-width: 1em;\n"
+"                padding: 6px;\n"
+"              font: bold 15px;\n"
+"            }\n"
+"      \n"
+"            QPushButton:checked {\n"
+"                color: rgb(255, 255, 255);\n"
+"                background-color: rgb(255, 0, 0);\n"
+"                border-style: inset;\n"
+"                border-width: 3px;\n"
+"                border-radius: 10px;\n"
+"                border-color: rgb(255, 0, 0);\n"
+"                font: bold 25px;\n"
+"                min-width: 1em;\n"
+"               \n"
+"            }\n"
+"            QPushButton:hover {\n"
+"                background-color: rgb(100, 100, 100);\n"
+"                color: rgb(255, 255, 255);\n"
+"                border-color: rgb(0, 255, 0);\n"
+"                padding-left: 5px;\n"
+"                padding-top: 5px;\n"
+"            }")
+        self.calibrate_button.setCheckable(True)
+        self.calibrate_button.setObjectName("calibrate_button")
+        self.framelabel_4 = QtWidgets.QLabel(self.frame_3)
+        self.framelabel_4.setGeometry(QtCore.QRect(20, 100, 51, 21))
+        self.framelabel_4.setMaximumSize(QtCore.QSize(300, 25))
+        self.framelabel_4.setObjectName("framelabel_4")
+        self.recordbutton = QtWidgets.QPushButton(self.frame_3)
+        self.recordbutton.setGeometry(QtCore.QRect(190, 190, 111, 31))
+        self.recordbutton.setStyleSheet("QPushButton {\n"
+"                color: rgb(255, 255, 255);\n"
+"                background-color: rgb(0, 0, 0);\n"
+"                border-style: outset;\n"
+"                border-width: 3px;\n"
+"                border-radius: 10px;\n"
+"                border-color: rgb(0, 0, 0);\n"
+"                min-width: 1em;\n"
+"                padding: 6px;\n"
+"            }\n"
+"      \n"
+"            QPushButton:checked {\n"
+"                color: rgb(255, 255, 255);\n"
+"                background-color: rgb(255, 0, 0);\n"
+"                border-style: inset;\n"
+"                border-width: 3px;\n"
+"                border-radius: 10px;\n"
+"                border-color: rgb(255, 0, 0);\n"
+"                font: bold 16px;\n"
+"                min-width: 1em;\n"
+"               \n"
+"            }\n"
+"            QPushButton:hover {\n"
+"                background-color: rgb(100, 100, 100);\n"
+"                color: rgb(255, 255, 255);\n"
+"                border-color: rgb(100, 100, 100);\n"
+"                padding-left: 5px;\n"
+"                padding-top: 5px;\n"
+"            }")
+        self.recordbutton.setCheckable(True)
+        self.recordbutton.setObjectName("recordbutton")
         self.trackerparamsframe = QtWidgets.QFrame(self.dockWidgetContents)
         self.trackerparamsframe.setGeometry(QtCore.QRect(10, 250, 311, 281))
         self.trackerparamsframe.setStyleSheet(" color: rgb(0, 0, 0);\n"
@@ -536,14 +576,16 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.frameslider.setFormat(_translate("MainWindow", "Frame %v"))
-        self.recordbutton.setText(_translate("MainWindow", "Record Video"))
         self.trackbutton.setText(_translate("MainWindow", "Begin Camera"))
         self.exposurelabel.setText(_translate("MainWindow", "Exposure"))
         self.objectivelabel.setText(_translate("MainWindow", "Objective"))
         self.framelabel_2.setText(_translate("MainWindow", "step 1:"))
-        self.framelabel_3.setText(_translate("MainWindow", "step 2:"))
+        self.framelabel_3.setText(_translate("MainWindow", "step 3:"))
         self.run_algo.setText(_translate("MainWindow", "Run MPC"))
         self.generate_data_button.setText(_translate("MainWindow", "Generate Data"))
+        self.calibrate_button.setText(_translate("MainWindow", "Calibrate"))
+        self.framelabel_4.setText(_translate("MainWindow", "step 2:"))
+        self.recordbutton.setText(_translate("MainWindow", "Record Video"))
         self.maskthreshlabel.setText(_translate("MainWindow", "Lower Thresh"))
         self.maskdilationlabel.setText(_translate("MainWindow", "Dilation"))
         self.croplengthlabel.setText(_translate("MainWindow", "Crop Length"))
