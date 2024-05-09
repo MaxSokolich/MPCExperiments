@@ -49,7 +49,7 @@ class RecordThread(QThread):
                         fontScale=1, 
                         thickness=4,
                         color = (255, 255, 255))
-                        
+        
             #frame = cv2.resize(frame, (self.width,self.height), interpolation = cv2.INTER_AREA)
             self.result.write(self.parent.currentframe)
             #time.sleep(.1)
@@ -59,6 +59,7 @@ class RecordThread(QThread):
         """Sets run flag to False and waits for thread to finish"""
         #blank = np.zeros((self.width, self.height, 3), dtype=np.uint8) 
         #self.change_pixmap_signal.emit(blank)
+        print("stopped record")
         self.recordstatus = False
         self.wait()
         self.result.release()

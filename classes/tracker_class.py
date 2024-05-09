@@ -76,7 +76,7 @@ class VideoThread(QThread):
         else:
             self.totalnumframes = 0
            
-        self.pix2metric =  0.28985 * self.objective #.29853 * self.objective#0.28985 * self.objective  
+        self.pix2metric =  0.28985 * self.objective #divide the variable in pixels by this number. aka 1 um is 0.28985 pixels
         
         
 

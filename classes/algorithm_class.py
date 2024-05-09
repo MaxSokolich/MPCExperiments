@@ -17,14 +17,15 @@ class algorithm:
         self.gp_sim = GP.LearningModule()
 
         # self.gp_sim.load_GP()
-        self.a0_sim = np.load('classes/a0_est.npy')
+        # self.a0_sim = np.load('classes/a0_est.npy')
+        self.a0_sim = 172
 
         # freq = 4
         # a0_def = 1.5
         self.dt = 0.1 #assume a timestep of 30 ms
 
-        x0 = 1000
-        y0 = 1000
+        x0 = 1200
+        y0 = 1300
 
         
         center_x = x0 
@@ -38,13 +39,15 @@ class algorithm:
         ref = np.ones((time_steps,2))
         ref[:,0]= x_ls
         ref[:,1]= y_ls
-
-        # theta_ls = np.linspace(0, 2*np.pi,time_steps)
-        # x_ls = center_x + r*(np.cos(theta_ls))
-        # y_ls = center_y+ r*np.sin(theta_ls)
-        # ref = np.ones((time_steps,2))
-        # ref[:,0]= x_ls
-        # ref[:,1]= y_ls
+        r = 400
+        theta_ls = np.linspace(0, 2*np.pi,time_steps)
+        x_ls = center_x + r*(np.cos(theta_ls))
+        y_ls = center_y+ r*np.sin(theta_ls)
+        ref = np.ones((time_steps,2))
+        ref[:,0]= x_ls
+        ref[:,1]= y_ls
+        self.init_point_x = ref[0,0]
+        self.init_point_y = ref[0, 1]
         # node_ls = np.load('classes/node_path.npy')
         # node_ls[3] = np.array([1500, 1600])
         # node_ls = np.delete(node_ls, 1, 0)
@@ -57,7 +60,7 @@ class algorithm:
 
         time_steps = len(self.ref)
 
-
+        self.goal = np.array([1500,1500])
         x0 = [self.ref[0,0],self.ref[0,1]]
 
 
@@ -67,7 +70,7 @@ class algorithm:
         # Weight matrices for state and input
         Q = np.array([[1,0],[0,1]])
         self.R = 0.01*np.array([[1,0],[0,1]])
-        self.N = 2
+        self.N = 10
         self.mpc = MPC(A= A, B=B, N=self.N, Q=Q, R=self.R)
 
 
@@ -79,7 +82,7 @@ class algorithm:
         self.alpha_t = 0
         self.freq_t =0
         self.counter = 0
-        self.time_range = 200 #frames
+        self.time_range = time_steps #frames
 
         #### ref Trjactory
         self.umpc_history = []
@@ -147,7 +150,7 @@ class algorithm:
         gp_sim = GP.LearningModule()
 
     
-        gp_sim.load_GP()
+        # gp_sim.load_GP()
         a0_sim = np.load('classes/a0_est.npy')
 
         # freq = 4
@@ -206,7 +209,7 @@ class algorithm:
         alpha_t = 0
         freq_t =0
         for t in range(time_steps):
-            goal = np.array([1500,1500])
+            goal = self.goal
             current_ref = self.find_stright_path( x_traj[t, :], goal)
             # Update reference for the current time step
             # current_ref = self.ref[t:min(t+N, time_steps), :]
@@ -300,7 +303,7 @@ class algorithm:
         ref[:,1]= y_ls
         
         self.ref = ref
-        print(self.ref)
+        # print(self.ref)
 
         time_steps = len(self.ref)
 
@@ -358,20 +361,17 @@ class algorithm:
 
         return path
 
-<<<<<<< HEAD
-    def run(self, robot_list): #this executes at every frame
-        
-        #cv2.circle(frame,(int(1500), int(1500)),10,(0,0,255), -1,)
-        self.robot_list = robot_list
-=======
->>>>>>> dd2d20819c6e94a3695ca39db9967852715bba1c
+    
 
 
-
-    def run(self, robot_list): #this executes at every frame
+    def run(self, robot_list, frame): #this executes at every frame
 
         self.counter += 1
 
+        cv2.circle(frame,(self.goal[0], self.goal[1]),20,(0,0,0), -1)
+        ref = robot_list[-1].trajectory
+        ref = np.reshape(np.array(ref), [len(ref),2])
+        self.ref = ref
         current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
 
         if current_ref.shape[0] < self.N:
@@ -397,18 +397,78 @@ class algorithm:
         #print(microrobot_latest_position)
         #print("X0", microrobot_latest_position)
         # u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, (v_e)*self.dt)
-        # u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, 0)
-        # print('self_N = ', self.N)
-        goal = np.array([1500,1500])
-     
-        if np.linalg.norm(goal-self.correct_position(robot_list))> 10:
-            path = self.find_stright_path(microrobot_latest_position, goal)
+        goal_trsh = 10
+        if np.linalg.norm(microrobot_latest_position-self.ref)<goal_trsh:
+            print('reached to the goal')
+            self.f_t, self.alpha_t = 0,0
+            path = []
         else:
-            path = self.find_stright_path(microrobot_latest_position, goal, length= np.linalg.norm(goal-self.correct_position(robot_list)))
+            u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, 0)
+            path = current_ref
+            print('u_mpc = ', u_mpc)
+            self.f_t, self.alpha_t = self.mpc.convert_control(u_mpc)
+            
+
+        
+        
+        print('current_ref =', current_ref)
+
+        cv2.putText(frame, "counter: {}".format(self.counter),
+                        (int(2448 * (6/10)),
+                        int(2048 * (9.9/10))),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        fontScale=1, 
+                        thickness=4,
+                        color = (255, 255, 255))
+        # print('self_N = ', self.N)
+        goal = self.goal#np.array([1500,1500])
+        # path_len = 150
+        # if np.linalg.norm(goal-self.correct_position(robot_list))> path_len:
+        #     path = self.find_stright_path(microrobot_latest_position, goal, length=path_len)
+        # else:
+        #     path = self.find_stright_path(microrobot_latest_position, goal, length= np.linalg.norm(goal-self.correct_position(robot_list)))
         # u_mpc , pred_traj = self.mpc.control_gurobi(x0 = self.correct_position(robot_list), ref =path, Dist=0)
-        u_mpc , pred_traj = self.mpc.control_gurobi(x0 = microrobot_latest_position, ref =path, Dist=0)
-        print()
+        # u_mpc , pred_traj = self.mpc.control_gurobi(x0 = microrobot_latest_position, ref =path, Dist=0)
+    
         self.umpc_history.append(u_mpc)
+
+        #plot direction vec
+        color = (255, 255, 255)  # Blue color in BGR
+        thickness = 10
+        line_type = 4
+        shift = 0
+        start_point = microrobot_latest_position
+        sc = 10
+        end_point = start_point.reshape(2) + sc*u_mpc.reshape(2)
+     
+        
+        #plot ref
+        ref_pts = np.array(self.ref, np.int32)
+        cv2.polylines(frame, [ref_pts], False, (100, 100, 100), 1)
+        # print('ref = ', path)
+        # print('pred_trj = ', pred_traj)
+
+        #u vec
+        cv2.arrowedLine(frame, start_point.astype(np.int32), end_point.astype(np.int32), color, thickness, line_type, shift)
+        
+        #plot path
+        path_pts = np.array(path, np.int32)
+        cv2.polylines(frame, [path_pts], False, (0, 255, 0), 8)
+
+
+        
+
+        #plot pred traj pts pts
+        # pred_traj_pts = np.array(pred_traj, np.int32)
+        # cv2.polylines(frame, [pred_traj_pts], False, (0, 0, 255), 6)
+
+        
+        
+        
+
+        
+
+        
         
         #x0 = x_traj[t,:] - current_ref[0,:]
 
@@ -416,17 +476,27 @@ class algorithm:
 
         #u_current = u_mpc
         #u_traj[t, :] = u_current # Assuming u_opt is the control input for the next step
-        print('u_mpc = ', u_mpc)
-        self.f_t, self.alpha_t = self.mpc.convert_control(u_mpc)
-        print(self.f_t, self.alpha_t)
+        
+
+        rotatingfield = "alpha: {:.2f}, freq: {:.2f}".format(np.degrees(self.alpha_t),  self.f_t) #adding 90 to alpha for display purposes only
+                
+        cv2.putText(frame, rotatingfield,
+            (int(2448 / 1.8),int(2048 / 20)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale=1.5, 
+            thickness=3,
+            color = (255, 255, 255),
+        )
+        
         ### f_t and alpha_t must be passed to the system as the control inputs
 
 
         #x_traj[t+1, :] =  sim.last_state# Update state based on non_linear dynamics
             #output: actions which is the magetnic field commands applied to the arduino
-        # if len(self.umpc_history)>2:
-        #     if np.linalg.norm(self.umpc_history[-1] - self.umpc_history[-2] ) < 0.1 :
-        Bx = 0 
+        
+
+
+        Bx = 0
         By = 0 
         Bz = 0
         alpha = self.alpha_t
@@ -435,6 +505,8 @@ class algorithm:
         psi = np.pi/2
         gradient = 0 # gradient has to be 1 for the gradient thing to work
         acoustic_freq = 0
+        
+        
 
         #     else:
         #         Bx = 0 
@@ -458,4 +530,4 @@ class algorithm:
         #     acoustic_freq = 0
         # 
         
-        return Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq
+        return frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq

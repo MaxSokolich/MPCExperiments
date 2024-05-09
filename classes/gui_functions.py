@@ -92,6 +92,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.arduino = ArduinoHandler(self.tbprint)
         self.arduino.connect(PORT)
         self.algorithm = algorithm()
+        self.calibration_coord = [self.algorithm.init_point_x, self.algorithm.init_point_y]
 
 
 
@@ -282,7 +283,8 @@ class MainWindow(QtWidgets.QMainWindow):
                         self.drawing = True
                         newx, newy = self.convert_coords(event.pos())
                         if len(self.tracker.robot_list) > 0:
-                            self.tracker.robot_list[-1].add_trajectory([newx, newy])
+                            #self.tracker.robot_list[-1].add_trajectory([newx, newy])
+                            self.algorithm.goal = np.array([newx,newy])
                 
                 
                     if event.buttons() == QtCore.Qt.MiddleButton: 
@@ -301,7 +303,8 @@ class MainWindow(QtWidgets.QMainWindow):
                                 newx, newy = self.convert_coords(event.pos())
                                 
                                 self.tracker.robot_list[-1].add_trajectory([newx, newy])
-                                
+                  
+                                                               
                 
                 elif event.type() == QtCore.QEvent.MouseButtonRelease:
                     if event.buttons() == QtCore.Qt.RightButton: 
@@ -323,10 +326,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.calibrate_status == True:
             if len(robot_list) > 0:
                 curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
-                endpos = [1000, 1000]
-                print(curernt_pos)
+                
+                #print(curernt_pos)
 
-                direction_vec = [endpos[0] - curernt_pos[0], endpos[1] - curernt_pos[1]]
+                direction_vec = [self.calibration_coord[0] - curernt_pos[0], self.calibration_coord[1] - curernt_pos[1]]
                 error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
                 start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
                 
@@ -339,7 +342,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
         elif self.algorithm_status == True:
             if len(robot_list) > 0:
-                Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list, self.currentframe)
+                frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list, frame)
                 self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
 
 
@@ -397,7 +400,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
         #HANDLE THE FRAME CAPTURE
+        
+        
+
         frame = self.handle_zoom(frame)
+
+        self.currentframe = frame
     
         rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         h, w, ch = rgb_image.shape
@@ -525,7 +533,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.tracker = VideoThread(self)
                 self.tracker.change_pixmap_signal.connect(self.update_image)
                 self.tracker.cropped_frame_signal.connect(self.update_croppedimage)
-                self.tracker.robot_list_signal.connect(self.update_actions)
+                #self.tracker.robot_list_signal.connect(self.update_actions)
                 self.tracker.start()
 
                 self.ui.trackbutton.setText("Stop")
