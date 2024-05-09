@@ -375,7 +375,6 @@ class algorithm:
 
         self.counter += 1
 
-        cv2.circle(frame,(self.goal[0], self.goal[1]),20,(0,0,0), -1)
         # ref = robot_list[-1].trajectory
         # ref = np.reshape(np.array(ref), [len(ref),2])
         # self.ref = ref

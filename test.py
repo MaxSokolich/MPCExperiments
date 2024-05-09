@@ -1,24 +1,12 @@
-from gurobipy import Model, GRB
+import numpy as np
+import pandas as pd
+from classes.Learning_module_2d import LearningModule
+data = np.load('datasetGP.npy')
+df = pd.DataFrame(data)
 
-# Create a new model
-m = Model("quadratic")
+# Save the DataFrame to an Excel file
+df.to_excel("data.xlsx", index=False)
+GP = LearningModule()
+GP.read_data_action(data)
+GP.estimate_a0()
 
-# Create variables
-x = m.addVar(name="x")
-y = m.addVar(name="y")
-
-# Set objective
-m.setObjective(x*x + x*y + y*y + 3*x + 4*y, GRB.MINIMIZE)
-
-# Add constraints
-m.addConstr(x + 2*y >= 2, "c0")
-m.addConstr(x + y >= 3, "c1")
-
-# Optimize model
-m.optimize()
-
-# Print results
-if m.status == GRB.OPTIMAL:
-    print(f'Optimal solution found: x = {x.X}, y = {y.X}')
-else:
-    print("No optimal solution found.")

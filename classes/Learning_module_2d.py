@@ -8,6 +8,13 @@ from mpl_toolkits import mplot3d
 from mpl_toolkits.mplot3d import Axes3D
 
 from scipy.optimize import minimize, minimize_scalar
+
+from sklearn.model_selection import train_test_split
+
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
 import joblib
 from sklearn.linear_model import LinearRegression
 
@@ -89,6 +96,174 @@ class LearningModule:
         # fig.colorbar(surface2, shrink=0.5, aspect=5)
 
         plt.show()
+
+
+    def read_data_action(self, data):
+        # If you are not sure about the sheet names, you can list all sheet names like this
+        cycle = 1
+
+        # To read a specific sheet by name
+        data = np.array(data)
+        freq_read = data[:,-1]
+        alpha_read = data[:,-2]
+        vx_read = data[:,3]
+        vy_read = data[:,4]
+        freq_ls = np.unique(freq_read)
+        alpha_ls = np.unique(alpha_read)
+
+
+        
+
+        # dt_ls = sheet2_df['Times'][first_non_zero_alpha:last_full_cycle].to_list()
+        # time = np.zeros_like(dt_ls)
+        # for i in range(len(time)-1):
+        #     time[i+1]= time[i]+dt_ls[i]
+        # df['Frame'] = sheet1_df['Frame'][first_non_zero_alpha:last_full_cycle]
+        # df['Rolling Frequency'] = sheet1_df['Rolling Frequency'][first_non_zero_alpha:]
+        # df['Alpha'] = sheet1_df['Alpha'][first_non_zero_alpha:last_full_cycle]
+        # df['Times'] = time
+        # df['Pos X'] = sheet2_df['Pos X'][first_non_zero_alpha:last_full_cycle]
+        # df['Pos Y'] = sheet2_df['Pos Y'][first_non_zero_alpha:last_full_cycle]
+        # df['Stuck?'] = sheet2_df['Stuck?'][first_non_zero_alpha:last_full_cycle]
+        # df['Vel X'] = sheet2_df['Vel X'][first_non_zero_alpha:last_full_cycle]
+        # df['Vel Y'] = sheet2_df['Vel Y'][first_non_zero_alpha:last_full_cycle]
+
+        
+    
+        
+        lf  = len(freq_ls)
+        la = len(alpha_ls)
+        vx_grid = np.zeros([cycle,len(freq_ls),len(alpha_ls)])
+        vy_grid = np.zeros([cycle,len(freq_ls),len(alpha_ls)])
+        
+        for i in range(lf):
+            ind = int(cycle*i)
+            for ci in range(cycle):
+                vx_grid[ci,i,:] = vx_read[int(ind*la):int((ind+ci+1)*la)]
+                # vx_grid[1,i,:] = vx_read[int((ind+1)*la):int((ind+2)*la)]
+                # vx_grid[2,i,:] = vx_read[int((ind+2)*la):int((ind+3)*la)]
+                vy_grid[ci,i,:] = vy_read[int(ind*la):int((ind+ci+1)*la)]
+                # vy_grid[1,i,:] = vy_read[int((ind+1)*la):int((ind+2)*la)]
+                # vy_grid[2,i,:] = vy_read[int((ind+2)*la):int((ind+3)*la)]
+
+                
+
+
+        
+        alpha_grid, freq_grid  = np.meshgrid(alpha_ls, freq_ls)
+        self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid = alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
+        # return  alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
+    
+    def estimate_a0(self):
+        X = np.vstack( [self.alpha_grid.flatten(), self.freq_grid.flatten()] ).transpose()
+        Y = np.vstack([self.vx_grid.flatten(), self.vy_grid.flatten()]).transpose()
+
+        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.15, random_state=42)
+        # plt.scatter(freq_sim*np.cos(alpha_sim),vy_d)
+        # plt.scatter(freq_sim*np.sin(alpha_sim),vx_d)
+        # plt.show()
+        # vx, vy, freq, alpha= num_velocity(time_sim, px_sim, py_sim, freq_sim, alpha_sim)
+
+        # a0_est = esitmate_a0(alpha[0:4000], freq[0:4000], vx[0:4000],vy[0:4000])
+
+        a0_est = self.linear_reg(self.alpha_grid.flatten(), self.freq_grid.flatten(), self.vx_grid.flatten(),self.vy_grid.flatten())
+        print(a0_est)
+        # a0_est = linear_reg(alpha, freq, vx, vy)
+        # learn noise and a0 -- note px_desired and py_desired need to be at the same time
+        # mean_vx = (vx_d[600:697]+vx_d[700:797]+vx_d[800:897])/3
+        # mean_vy =(vy_d[600:697]+vy_d[700:797]+vy_d[800:897])/3
+        self.a0 = a0_est
+        # self.learn(self.vx_grid.flatten(), self.vy_grid.flatten(), self.alpha_grid.flatten(), self.freq_grid.flatten())
+        self.learn( Y_train[:,0], Y_train[:,1], X_train[:,0], X_train[:,1])
+        print('Trainig completed')
+
+    
+
+    def linear_reg(self, alpha, freq, vx, vy):
+        ux = freq*np.sin(alpha)
+        uy = freq*np.cos(alpha)
+
+
+
+        model_x = LinearRegression()
+        model_y = LinearRegression()
+
+        # Train the model
+        model_x.fit(np.reshape(ux,(-1,1)), np.reshape(vx,(-1,1)))
+
+        model_y.fit(np.reshape(uy,(-1,1)), np.reshape(vy,(-1,1)))
+        # Display the coefficients
+        print("a0_x:", model_x.coef_)
+        print("D_x:", model_x.intercept_)
+
+        X_new = np.array([[ux.min()], [ux.max()]])  # X values for prediction
+        y_predict = model_x.predict(X_new)
+
+        # Plotting the data points
+        # plt.scatter(ux, vx, color='blue', label='Data points')
+
+        # # Plotting the regression line
+        # plt.plot(X_new, y_predict, color='red', label='Regression line')
+        print("a0_y:", model_y.coef_)
+        print("D_y:", model_y.intercept_)
+
+        # Adding labels and title
+        # plt.xlabel('Independent variable X')
+        # plt.ylabel('Dependent variable y')
+        # plt.title('Linear Regression')
+        # plt.legend()
+        # plt.show()
+
+
+        X_new = np.array([[uy.min()], [uy.max()]])  # X values for prediction
+        y_predict = model_y.predict(X_new)
+
+        # Plotting the data points
+        # plt.scatter(uy, vy, color='blue', label='Data points')
+
+        # # Plotting the regression line
+        # plt.plot(X_new, y_predict, color='red', label='Regression line')
+
+        # # Adding labels and title
+        # plt.xlabel('Independent variable X')
+        # plt.ylabel('Dependent variable y')
+        # plt.title('Linear Regression')
+        # plt.legend()
+        # plt.show()
+        a0 =0.5*model_x.coef_[0][0]+0.5*model_y.coef_[0][0]
+
+
+        ####Visualize the error
+        # ex = vx-a0*ux
+        # ey = vy-a0*uy
+        # fig, ax = plt.subplots()
+        # ax.plot(alpha[600:697], ex[600:697])
+        # ax.plot(alpha[700:797], ex[700:797])
+        # ax.plot(alpha[800:897], ex[800:897])
+
+
+        # freq_grid, alpha_grid = np.meshgrid(freq, alpha)
+
+        # # Create a new figure for plotting
+        # fig = plt.figure()
+        # ax = fig.add_subplot(111, projection='3d')
+
+        # # Plotting the surface
+        # surface = ax.plot_surface(freq_grid, alpha_grid, np.reshape(ex,(-1,1)), cmap='viridis')
+
+        # # Add a color bar which maps values to colors
+        # fig.colorbar(surface, shrink=0.5, aspect=5)
+
+        # # Labels and title
+        # ax.set_xlabel('Frequency (freq)')
+        # ax.set_ylabel('Alpha')
+        # ax.set_zlabel('Ex Value')
+        # ax.set_title('Surface Plot of Ex')
+
+        # Show plot
+        # plt.show()
+        return a0
+
 
 
 

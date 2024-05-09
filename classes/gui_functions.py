@@ -34,6 +34,8 @@ from classes.arduino_class import ArduinoHandler
 from classes.robot_class import Robot
 from classes.record_class import RecordThread
 from classes.algorithm_class import algorithm
+from classes.generate_data_class import gen_data
+from classes.Learning_module_2d import LearningModule
 
 
 
@@ -92,9 +94,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.arduino = ArduinoHandler(self.tbprint)
         self.arduino.connect(PORT)
         self.algorithm = algorithm()
+        self.generate_data = gen_data()
         self.calibration_coord = [self.algorithm.init_point_x, self.algorithm.init_point_y]
 
-
+        self.GP = LearningModule()
 
         self.zoom_x, self.zoom_y, self.zoomscale, self.scrollamount = 1,0,0,0
         self.croppedresult = None
@@ -105,6 +108,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.cap = None
         self.tracker = None
         self.recorder = None
+
+        #self.dataset_GP = []  #data from generate data function 
 
         self.save_status = False
         self.output_workbook = None
@@ -160,6 +165,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
     def generate_data_function(self):
         if self.ui.generate_data_button.isChecked():
+            
             self.generate_data_status = True
             self.ui.generate_data_button.setText("Stop")
         else:
@@ -338,7 +344,44 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def update_image(self, frame, robot_list):
         """Updates the image_label with a new opencv image"""
-        if self.calibrate_status == True:
+        #step 1
+        if self.generate_data_status == True and self.generate_data.run_calibration_status == True: 
+            if len(robot_list) > 0:
+                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run_calibration(robot_list)
+
+                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
+        
+
+        elif self.generate_data_status == True and self.generate_data.run_calibration_status == False:
+            if len(robot_list) > 0:
+            
+                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run()
+                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
+                if self.generate_data.reading_actions == True:
+                    #in here save data
+                    time = robot_list[-1].times[-1]
+                    px = robot_list[-1].position_list[-1][0]
+                    py = robot_list[-1].position_list[-1][1]
+                    vx = robot_list[-1].velocity_list[-1][0]
+                    vy = robot_list[-1].velocity_list[-1][1]
+                    alpha = alpha
+                    freq = freq
+
+                    #save current state to dataset
+                    self.generate_data.dataset_GP.append([time, px,py,vx,vy, alpha, freq])
+                if self.generate_data.reading_completed :
+                    print('data size =', len(self.generate_data.dataset_GP))
+                    np.save('datasetGP.npy', np.array(self.generate_data.dataset_GP))
+                    self.GP.read_data_action(self.generate_data.dataset_GP)
+                    self.GP.estimate_a0()
+
+
+
+
+
+        
+        #step 2
+        elif self.calibrate_status == True:
             if len(robot_list) > 0:
                 curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
                 
@@ -356,11 +399,13 @@ class MainWindow(QtWidgets.QMainWindow):
         
 
 
-        
+        #step3       
         elif self.algorithm_status == True:
             if len(robot_list) > 0:
                 frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list, frame)
                 self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
+
+
 
 
         elif self.excel_actions_status == True and self.excel_actions_df is not None:
@@ -392,6 +437,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
         
         #DEFINE CURRENT ROBOT PARAMS TO A LIST
+       
         if len(robot_list) > 0:
             self.robots = []
             for bot in robot_list:
@@ -431,19 +477,7 @@ class MainWindow(QtWidgets.QMainWindow):
         convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
         p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
         qt_img = QPixmap.fromImage(p)
-       
-        #update frame slider too
-        #("Frame:"+str(self.frame_number))
-        #if self.videopath !=0:
-        #    self.ui.frameslider.setValue(self.tracker.framenum)
-        
-        #also update robot info
-        #if len(self.robots) > 0:
-        #    robot_diameter = round(np.sqrt(4*self.robots[-1][8]/np.pi),1)
-        #    self.ui.vellcdnum.display(int(self.robots[-1][6]))
-        #    self.ui.blurlcdnum.display(int(self.robots[-1][7]))
-        #    self.ui.sizelcdnum.display(robot_diameter)
-                
+
        
         self.ui.VideoFeedLabel.setPixmap(qt_img)
         
