@@ -16,6 +16,6 @@ This is a repo containing just tracking information from a FLIR Blackfly camera
 
 
 
-pyuic5 uis/GUI.ui -o gui_widgets.py
+/opt/homebrew/bin/python3.9 -m PyQt5.uic.pyuic uis/MPCGUI.ui -o gui_widgets.py
 
 

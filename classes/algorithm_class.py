@@ -2,7 +2,6 @@
 import numpy as np
 import sys
 import classes.Learning_module_2d as GP # type: ignore
-
 from classes.MR_simulator import Simulator
 import math 
 from classes.MPC import  MPC
@@ -166,6 +165,8 @@ class algorithm:
         noise_var = 0.0
         sim = Simulator()
         time_steps = len(self.ref)
+
+        self.live_path = False
         #### ref Trjactory
 
         
@@ -319,7 +320,8 @@ class algorithm:
 
 
         
-
+    
+        
 
 
     def generate_in_between_points(self, node_ls):
@@ -369,6 +371,7 @@ class algorithm:
         return path
 
     
+    
 
 
     def run(self, robot_list, frame): #this executes at every frame
@@ -376,9 +379,14 @@ class algorithm:
         self.counter += 1
 
         cv2.circle(frame,(self.goal[0], self.goal[1]),20,(0,0,0), -1)
-        # ref = robot_list[-1].trajectory
-        # ref = np.reshape(np.array(ref), [len(ref),2])
-        # self.ref = ref
+
+
+        #determines what type of path were following from trajecotry list
+        ref = robot_list[-1].trajectory
+        ref = np.reshape(np.array(ref), [len(ref),2])
+        self.ref = ref
+        
+
         current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
 
         if current_ref.shape[0] < self.N:
@@ -393,6 +401,8 @@ class algorithm:
         
         
         #microrobot_latest_position = x_traj[t, :]
+
+
         
         
         #define robot position

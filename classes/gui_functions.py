@@ -28,6 +28,8 @@ try:
 except Exception:
     pass
 
+from classes.rrt_star_class import RrtStar
+from classes.rrt_class import RRT
 from classes.tracker_class import VideoThread
 from classes.gui_widgets import Ui_MainWindow
 from classes.arduino_class import ArduinoHandler
@@ -121,6 +123,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.robotmaskdilationbox.valueChanged.connect(self.get_slider_vals)
         self.ui.robotmaskblurbox.valueChanged.connect(self.get_slider_vals)
         self.ui.robotcroplengthbox.valueChanged.connect(self.get_slider_vals)
+
+        self.ui.cellmasklowerbox.valueChanged.connect(self.get_slider_vals)
+        self.ui.cellmaskupperbox.valueChanged.connect(self.get_slider_vals)
+        self.ui.cellmaskdilationbox.valueChanged.connect(self.get_slider_vals)
+        self.ui.cellmaskblurbox.valueChanged.connect(self.get_slider_vals)
+        self.ui.cellcroplengthbox.valueChanged.connect(self.get_slider_vals)
       
 
 
@@ -294,9 +302,29 @@ class MainWindow(QtWidgets.QMainWindow):
                         self.drawing = True
                         newx, newy = self.convert_coords(event.pos())
                         if len(self.tracker.robot_list) > 0:
-                            #self.tracker.robot_list[-1].add_trajectory([newx, newy])
-                            self.algorithm.goal = np.array([newx,newy])
+                            startpos = self.tracker.robot_list[-1].position_list[-1]
+                            endpos = [newx, newy]
+                     
+                            if self.ui.drawingcheckbox.isChecked():
+                                self.tracker.robot_list[-1].add_trajectory(startpos)
+                            
+                            elif self.ui.RRTcheckbox.isChecked():
+                                step_size = 50
+                                pathplanner = RRT(self.cellmask, startpos, endpos, step_size)
                 
+                                trajectory = pathplanner.run()
+                                trajectory.append(endpos)    
+                            
+                                #record robot list trajectory
+                                self.tracker.robot_list[-1].trajectory= trajectory
+
+
+                            elif self.ui.RRTstarcheckbox.isChecked():
+                                rrt_star = RrtStar(img = self.cellmask, x_start = startpos, x_goal=endpos, step_len=50,
+                                         goal_sample_rate=.1, search_radius=2, iter_max=3000,plotting_flag=True)
+                                
+                                self.tracker.robot_list[-1].trajectory = rrt_star.planning()
+                            
                 
                     if event.buttons() == QtCore.Qt.MiddleButton: 
                         del self.tracker.robot_list[:]
@@ -311,9 +339,11 @@ class MainWindow(QtWidgets.QMainWindow):
                     if event.buttons() == QtCore.Qt.RightButton:
                         if self.drawing == True:
                             if len(self.tracker.robot_list)>0:
-                                newx, newy = self.convert_coords(event.pos())
-                                
-                                self.tracker.robot_list[-1].add_trajectory([newx, newy])
+                                if self.ui.drawingcheckbox.isChecked():
+                               
+                                    newx, newy = self.convert_coords(event.pos())
+                                    
+                                    self.tracker.robot_list[-1].add_trajectory([newx, newy])
                   
                                                                
                 
@@ -333,11 +363,16 @@ class MainWindow(QtWidgets.QMainWindow):
             
             
 
+    
 
 
-
-    def update_image(self, frame, robot_list):
+    def update_image(self, frame, cell_mask, robot_list):
         """Updates the image_label with a new opencv image"""
+        
+        self.cellmask=cell_mask
+
+        
+
         if self.calibrate_status == True:
             if len(robot_list) > 0:
                 curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
@@ -551,7 +586,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.tracker = VideoThread(self)
                 self.tracker.change_pixmap_signal.connect(self.update_image)
                 self.tracker.cropped_frame_signal.connect(self.update_croppedimage)
-                #self.tracker.robot_list_signal.connect(self.update_actions)
                 self.tracker.start()
 
                 self.ui.trackbutton.setText("Stop")
@@ -629,6 +663,12 @@ class MainWindow(QtWidgets.QMainWindow):
         robotmaskblur = self.ui.robotmaskblurbox.value()
         robotcrop_length = self.ui.robotcroplengthbox.value()
 
+        celllower = self.ui.cellmasklowerbox.value() 
+        cellupper = self.ui.cellmaskupperbox.value()
+        celldilation = self.ui.cellmaskdilationbox.value() 
+        cellmaskblur = self.ui.cellmaskblurbox.value()
+        cellcrop_length = self.ui.cellcroplengthbox.value()
+
 
         if self.tracker is not None: 
 
@@ -637,6 +677,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tracker.robot_mask_dilation = robotdilation
             self.tracker.robot_mask_blur = robotmaskblur
             self.tracker.robot_crop_length = robotcrop_length
+
+            self.tracker.cell_mask_lower = celllower
+            self.tracker.cell_mask_upper = cellupper
+            self.tracker.cell_mask_dilation = celldilation
+            self.tracker.cell_mask_blur = cellmaskblur
+            self.tracker.cell_crop_length = cellcrop_length
 
 
 
@@ -650,6 +696,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.robotcroplengthbox.setValue(40)
         self.ui.objectivebox.setValue(10)
         self.ui.exposurebox.setValue(5000)
+
+        self.ui.cellmasklowerbox.setValue(0)
+        self.ui.cellmaskupperbox.setValue(128)
+        self.ui.cellmaskdilationbox.setValue(0)
+        self.ui.cellmaskblurbox.setValue(0)
+        self.ui.cellcroplengthbox.setValue(40)
         
 
     def resizeEvent(self, event):
