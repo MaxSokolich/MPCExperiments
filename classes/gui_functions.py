@@ -152,7 +152,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.calibrate_status = False
         self.generate_data_status = False
 
-    def update_image(self, frame, robot_list):
+    def update_image(self, frame, cell_mask, robot_list):
+
+        self.cell_mask = cell_mask
         """Updates the image_label with a new opencv image"""
         #step 1
         if self.generate_data_status == True and self.generate_data.run_calibration_status == True: 
