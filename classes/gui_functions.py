@@ -94,10 +94,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.arduino = ArduinoHandler(self.tbprint)
         self.arduino.connect(PORT)
         self.algorithm = algorithm()
-        self.generate_data = gen_data()
+        self.cycles_gen_data= 3
+        self.generate_data = gen_data(self.cycles_gen_data)
         self.calibration_coord = [self.algorithm.init_point_x, self.algorithm.init_point_y]
 
-        self.GP = LearningModule()
+        self.GP = LearningModule(self.cycles_gen_data)
 
         self.zoom_x, self.zoom_y, self.zoomscale, self.scrollamount = 1,0,0,0
         self.croppedresult = None
@@ -151,6 +152,147 @@ class MainWindow(QtWidgets.QMainWindow):
         self.calibrate_status = False
         self.generate_data_status = False
 
+    def update_image(self, frame, robot_list):
+        """Updates the image_label with a new opencv image"""
+        #step 1
+        if self.generate_data_status == True and self.generate_data.run_calibration_status == True: 
+            if len(robot_list) > 0:
+                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run_calibration(robot_list)
+
+                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
+        
+
+        elif self.generate_data_status == True and self.generate_data.run_calibration_status == False:
+            if len(robot_list) > 0:
+            
+                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run()
+                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
+                if self.generate_data.reading_actions == True:
+                    #in here save data
+                    time = robot_list[-1].times[-1]
+                    px = robot_list[-1].position_list[-1][0]
+                    py = robot_list[-1].position_list[-1][1]
+                    vx = robot_list[-1].velocity_list[-1][0]
+                    vy = robot_list[-1].velocity_list[-1][1]
+                    alpha = alpha
+                    freq = freq
+
+                    #save current state to dataset
+                    self.generate_data.dataset_GP.append([time, px,py,vx,vy, alpha, freq])
+                if self.generate_data.reading_completed :
+                    print('data size =', len(self.generate_data.dataset_GP))
+                    np.save('datasetGP.npy', np.array(self.generate_data.dataset_GP))
+                    self.GP.read_data_action(self.generate_data.dataset_GP)
+                    self.GP.estimate_a0()
+
+
+
+
+
+        
+        #step 2
+        elif self.calibrate_status == True:
+            if len(robot_list) > 0:
+                curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
+                
+                #print(curernt_pos)
+
+                direction_vec = [self.calibration_coord[0] - curernt_pos[0], self.calibration_coord[1] - curernt_pos[1]]
+                error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
+                start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
+                
+                if error < 5:
+                    self.arduino.send(0,0,0,0,0,0,0,0,0)
+                else:
+                    self.arduino.send(0,0,0,start_alpha,np.pi/2,10,np.pi/2,0,0)
+        
+        
+
+
+        #step3       
+        elif self.algorithm_status == True:
+            if len(robot_list) > 0:
+                frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list, frame, self.GP)
+                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
+
+
+
+
+        elif self.excel_actions_status == True and self.excel_actions_df is not None:
+            
+            self.actions_counter +=1
+
+            if self.actions_counter < self.excel_actions_df['Frame'].iloc[-1]:
+                filtered_row = self.excel_actions_df[self.excel_actions_df['Frame'] == self.actions_counter]
+            
+                Bx = float(filtered_row["Bx"])
+                By = float(filtered_row["By"])
+                Bz = float(filtered_row["Bz"])
+                alpha = float(filtered_row["Alpha"])
+                gamma = float(filtered_row["Gamma"])
+                freq = float(filtered_row["Rolling Frequency"])
+                psi = float(filtered_row["Psi"])
+                gradient = float(filtered_row["Gradient"])
+                acoustic_freq = float(filtered_row["Acoustic Frequency"])
+                self.arduino.send(Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq)
+            
+            else:
+                self.excel_actions_status = False
+                self.ui.apply_actions.setText("Apply")
+                self.ui.apply_actions.setChecked(False)
+                self.arduino.send(0,0,0,0,0,0,0,0,0)
+        else:
+            self.arduino.send(0,0,0,0,0,0,0,0,0)  #zeros everything
+            
+        
+        
+        #DEFINE CURRENT ROBOT PARAMS TO A LIST
+       
+        if len(robot_list) > 0:
+            self.robots = []
+            for bot in robot_list:
+                currentbot_params = [bot.frame_list[-1],
+                                     bot.times[-1],
+                                     bot.position_list[-1][0],bot.position_list[-1][1], 
+                                     bot.velocity_list[-1][0], bot.velocity_list[-1][1],bot.velocity_list[-1][2],
+                                     bot.blur_list[-1],
+                                     bot.area_list[-1],
+                                     bot.avg_area,
+                                     bot.cropped_frame[-1][0],bot.cropped_frame[-1][1],bot.cropped_frame[-1][2],bot.cropped_frame[-1][3],
+                                     bot.stuck_status_list[-1],
+                                     bot.trajectory,
+                                    ]
+                
+                self.robots.append(currentbot_params)
+        
+        #IF SAVE STATUS THEN CONTINOUSLY SAVE THE CURRENT ROBOT PARAMS AND MAGNETIC FIELD PARAMS TO AN EXCEL ROWS
+        if self.save_status == True:
+            for (sheet, bot) in zip(self.robot_params_sheets,self.robots):
+                sheet.append(bot[:-1])
+
+
+
+        #HANDLE THE FRAME CAPTURE
+        
+        
+
+        frame = self.handle_zoom(frame)
+
+        self.currentframe = frame
+    
+        rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb_image.shape
+      
+        bytes_per_line = ch * w
+        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
+        qt_img = QPixmap.fromImage(p)
+
+       
+        self.ui.VideoFeedLabel.setPixmap(qt_img)
+        
+        
+
     def go_to_start(self):
         if self.ui.calibrate_button.isChecked():
             self.calibrate_status = True
@@ -169,9 +311,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.generate_data_status = True
             self.ui.generate_data_button.setText("Stop")
         else:
-
+            
             self.generate_data_status = False
             self.ui.generate_data_button.setText("Generate Data")
+            self.generate_data.reset()
       
 
 
@@ -307,6 +450,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     if event.buttons() == QtCore.Qt.MiddleButton: 
                         del self.tracker.robot_list[:]
                         del self.robots[:]
+                        self.generate_data.reset(self.cycles_gen_data)
             
                        
                     
@@ -342,146 +486,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 
-    def update_image(self, frame, robot_list):
-        """Updates the image_label with a new opencv image"""
-        #step 1
-        if self.generate_data_status == True and self.generate_data.run_calibration_status == True: 
-            if len(robot_list) > 0:
-                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run_calibration(robot_list)
-
-                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
-        
-
-        elif self.generate_data_status == True and self.generate_data.run_calibration_status == False:
-            if len(robot_list) > 0:
-            
-                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run()
-                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
-                if self.generate_data.reading_actions == True:
-                    #in here save data
-                    time = robot_list[-1].times[-1]
-                    px = robot_list[-1].position_list[-1][0]
-                    py = robot_list[-1].position_list[-1][1]
-                    vx = robot_list[-1].velocity_list[-1][0]
-                    vy = robot_list[-1].velocity_list[-1][1]
-                    alpha = alpha
-                    freq = freq
-
-                    #save current state to dataset
-                    self.generate_data.dataset_GP.append([time, px,py,vx,vy, alpha, freq])
-                if self.generate_data.reading_completed :
-                    print('data size =', len(self.generate_data.dataset_GP))
-                    np.save('datasetGP.npy', np.array(self.generate_data.dataset_GP))
-                    self.GP.read_data_action(self.generate_data.dataset_GP)
-                    self.GP.estimate_a0()
-
-
-
-
-
-        
-        #step 2
-        elif self.calibrate_status == True:
-            if len(robot_list) > 0:
-                curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
-                
-                #print(curernt_pos)
-
-                direction_vec = [self.calibration_coord[0] - curernt_pos[0], self.calibration_coord[1] - curernt_pos[1]]
-                error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
-                start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
-                
-                if error < 5:
-                    self.arduino.send(0,0,0,0,0,0,0,0,0)
-                else:
-                    self.arduino.send(0,0,0,start_alpha,np.pi/2,10,np.pi/2,0,0)
-        
-        
-
-
-        #step3       
-        elif self.algorithm_status == True:
-            if len(robot_list) > 0:
-                frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list, frame)
-                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
-
-
-
-
-        elif self.excel_actions_status == True and self.excel_actions_df is not None:
-            
-            self.actions_counter +=1
-
-            if self.actions_counter < self.excel_actions_df['Frame'].iloc[-1]:
-                filtered_row = self.excel_actions_df[self.excel_actions_df['Frame'] == self.actions_counter]
-            
-                Bx = float(filtered_row["Bx"])
-                By = float(filtered_row["By"])
-                Bz = float(filtered_row["Bz"])
-                alpha = float(filtered_row["Alpha"])
-                gamma = float(filtered_row["Gamma"])
-                freq = float(filtered_row["Rolling Frequency"])
-                psi = float(filtered_row["Psi"])
-                gradient = float(filtered_row["Gradient"])
-                acoustic_freq = float(filtered_row["Acoustic Frequency"])
-                self.arduino.send(Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq)
-            
-            else:
-                self.excel_actions_status = False
-                self.ui.apply_actions.setText("Apply")
-                self.ui.apply_actions.setChecked(False)
-                self.arduino.send(0,0,0,0,0,0,0,0,0)
-        else:
-            self.arduino.send(0,0,0,0,0,0,0,0,0)  #zeros everything
-            
-        
-        
-        #DEFINE CURRENT ROBOT PARAMS TO A LIST
-       
-        if len(robot_list) > 0:
-            self.robots = []
-            for bot in robot_list:
-                currentbot_params = [bot.frame_list[-1],
-                                     bot.times[-1],
-                                     bot.position_list[-1][0],bot.position_list[-1][1], 
-                                     bot.velocity_list[-1][0], bot.velocity_list[-1][1],bot.velocity_list[-1][2],
-                                     bot.blur_list[-1],
-                                     bot.area_list[-1],
-                                     bot.avg_area,
-                                     bot.cropped_frame[-1][0],bot.cropped_frame[-1][1],bot.cropped_frame[-1][2],bot.cropped_frame[-1][3],
-                                     bot.stuck_status_list[-1],
-                                     bot.trajectory,
-                                    ]
-                
-                self.robots.append(currentbot_params)
-        
-        #IF SAVE STATUS THEN CONTINOUSLY SAVE THE CURRENT ROBOT PARAMS AND MAGNETIC FIELD PARAMS TO AN EXCEL ROWS
-        if self.save_status == True:
-            for (sheet, bot) in zip(self.robot_params_sheets,self.robots):
-                sheet.append(bot[:-1])
-
-
-
-        #HANDLE THE FRAME CAPTURE
-        
-        
-
-        frame = self.handle_zoom(frame)
-
-        self.currentframe = frame
     
-        rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgb_image.shape
-      
-        bytes_per_line = ch * w
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
-        qt_img = QPixmap.fromImage(p)
-
-       
-        self.ui.VideoFeedLabel.setPixmap(qt_img)
-        
-        
 
     
 

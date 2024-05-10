@@ -12,9 +12,11 @@ import cv2
 
 class algorithm:
     def __init__(self):
+        self.alpha_ls = [0]
+        self.freq_ls = [0]
+
         
-        
-        self.gp_sim = GP.LearningModule()
+        # self.gp_sim = GP.LearningModule()
 
         # self.gp_sim.load_GP()
         # self.a0_sim = np.load('classes/a0_est.npy')
@@ -72,7 +74,8 @@ class algorithm:
 
 
         ########MPC parameters
-        B  = self.a0_sim*self.dt*np.array([[1,0],[0,1]])
+        # B  = self.a0_sim*self.dt*np.array([[1,0],[0,1]])
+        B  = self.a0_sim*np.array([[1,0],[0,1]])
         A = np.eye(2)
         # Weight matrices for state and input
         Q = np.array([[1,0],[0,1]])
@@ -371,7 +374,7 @@ class algorithm:
     
 
 
-    def run(self, robot_list, frame): #this executes at every frame
+    def run(self, robot_list, frame, GP): #this executes at every frame
 
         self.counter += 1
 
@@ -409,10 +412,19 @@ class algorithm:
             self.f_t, self.alpha_t = 0,0
             path = []
         else:
-            u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, 0)
+            alpha_GP = np.pi/2-self.alpha_ls[-1]
+            freq_GP = self.freq_ls [-1]
+            muX,sigX = GP.gprX.predict(np.array([[alpha_GP, freq_GP]]), return_std=True)
+            muY,sigY = GP.gprY.predict(np.array([[alpha_GP, freq_GP]]), return_std=True)
+            # D = np.array([gp_sim.Dx, gp_sim.Dy])
+            v_e = np.array([muX[0], muY[0]])
+            
+            u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, v_e)
             path = current_ref
             print('u_mpc = ', u_mpc)
             self.f_t, self.alpha_t = self.mpc.convert_control(u_mpc)
+            self.freq_ls.append(self.f_t)
+            self.alpha_ls.append(self.alpha_t)
             
 
         

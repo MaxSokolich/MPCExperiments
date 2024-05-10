@@ -11,13 +11,19 @@ import cv2
 
 
 class gen_data:
-    def __init__(self):
-        self.reset()
+    def __init__(self,cycles):
+        self.reset(cycles)
+        
         
 
         
-    def reset(self):
+    def reset(self,cycles):
         self.counter = 0
+        self.cycles = cycles#train my moving in 3 circles
+        ### freq range for gen data
+        self.f_min = 0
+        self.f_max =7 
+        self.frange_size = self.f_max-self.f_min +1 
         self.run_calibration_status = True
         self.robot_list = None
         
@@ -25,16 +31,17 @@ class gen_data:
 
         self.reading_actions = False
         self.dataset_GP = []  #data from generate data function 
-        freq_ls = np.linspace(0, 7, 2)
+        freq_ls = np.linspace(self.f_min, self.f_max, self.frange_size)
+        self.time_steps = 480 ##number of data points for each freq
         #actions = np.array([[1, 0.3*np.pi*((t/time_steps)-1)*(-1)**(t//300)] 
         #                        for t in range(1,time_steps)]) # [T,action_dim]
         actions_learn = np.array([])
 
         for freq in freq_ls:
-            time_steps = 36 #train for 10s at 30 hz
-            cycles = 1 #train my moving in 3 circles
+            # time_steps = 36 #train for 10s at 30 hz
+        
 
-            steps = (int)(time_steps / cycles)
+            steps = (int)(self.time_steps / self.cycles)
 
             #generate actions to move in a circle at a constant frequency
             actions_circle = np.zeros( (steps, 2))
@@ -42,7 +49,7 @@ class gen_data:
             actions_circle[:,1] = np.linspace(0, 2*np.pi, steps)
 
             #stack the circle actions to get our learning set
-            actions_circle_combined = np.vstack([actions_circle]*cycles)
+            actions_circle_combined = np.vstack([actions_circle]*self.cycles)
             if len(actions_learn) == 0 :
                 actions_learn = actions_circle_combined
             else:
@@ -59,7 +66,7 @@ class gen_data:
         
         #print(curernt_pos)
 
-        direction_vec = [1800 - curernt_pos[0], 1400 - curernt_pos[1]]
+        direction_vec = [1800 - curernt_pos[0], 1200 - curernt_pos[1]]
         error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
         start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
         

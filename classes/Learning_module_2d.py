@@ -37,7 +37,7 @@ def objective(X, a0, v_d, GPx, GPy):
 
 
 class LearningModule:
-    def __init__(self):
+    def __init__(self,cycle):
         # kernel list is the kernel cookbook from scikit-learn
         
         kernel = ConstantKernel(1.0, (1e-2, 500.0))* RBF(length_scale=1.0, length_scale_bounds=(1e-2, 500.0)) + ConstantKernel(1.0, (1e-2, 500.0))*WhiteKernel()
@@ -55,7 +55,8 @@ class LearningModule:
         self.f = 0
         self.Dx = 0
         self.Dy = 0
-
+        self.plot = True
+        self.cycle = cycle
 
     
     def load_GP(self):
@@ -100,49 +101,32 @@ class LearningModule:
 
     def read_data_action(self, data):
         # If you are not sure about the sheet names, you can list all sheet names like this
-        cycle = 1
-
+        # cycle = 1
+        sc_factor = 0.28985
         # To read a specific sheet by name
         data = np.array(data)
         freq_read = data[:,-1]
-        alpha_read = data[:,-2]
-        vx_read = data[:,3]
-        vy_read = data[:,4]
+        alpha_read = np.pi/2-data[:,-2]
+        vx_read = data[:,3]/sc_factor
+        vy_read = -data[:,4]/sc_factor
         freq_ls = np.unique(freq_read)
         alpha_ls = np.unique(alpha_read)
 
 
-        
-
-        # dt_ls = sheet2_df['Times'][first_non_zero_alpha:last_full_cycle].to_list()
-        # time = np.zeros_like(dt_ls)
-        # for i in range(len(time)-1):
-        #     time[i+1]= time[i]+dt_ls[i]
-        # df['Frame'] = sheet1_df['Frame'][first_non_zero_alpha:last_full_cycle]
-        # df['Rolling Frequency'] = sheet1_df['Rolling Frequency'][first_non_zero_alpha:]
-        # df['Alpha'] = sheet1_df['Alpha'][first_non_zero_alpha:last_full_cycle]
-        # df['Times'] = time
-        # df['Pos X'] = sheet2_df['Pos X'][first_non_zero_alpha:last_full_cycle]
-        # df['Pos Y'] = sheet2_df['Pos Y'][first_non_zero_alpha:last_full_cycle]
-        # df['Stuck?'] = sheet2_df['Stuck?'][first_non_zero_alpha:last_full_cycle]
-        # df['Vel X'] = sheet2_df['Vel X'][first_non_zero_alpha:last_full_cycle]
-        # df['Vel Y'] = sheet2_df['Vel Y'][first_non_zero_alpha:last_full_cycle]
-
-        
-    
-        
         lf  = len(freq_ls)
         la = len(alpha_ls)
-        vx_grid = np.zeros([cycle,len(freq_ls),len(alpha_ls)])
-        vy_grid = np.zeros([cycle,len(freq_ls),len(alpha_ls)])
+        vx_grid = np.zeros([self.cycle,len(freq_ls),len(alpha_ls)])
+        vy_grid = np.zeros([self.cycle,len(freq_ls),len(alpha_ls)])
         
         for i in range(lf):
-            ind = int(cycle*i)
-            for ci in range(cycle):
-                vx_grid[ci,i,:] = vx_read[int(ind*la):int((ind+ci+1)*la)]
+            
+            for ci in range(self.cycle):
+                start_ind= int(la*self.cycle*i+ci*la)
+                end_ind = int(la*self.cycle*i+(ci+1)*la)
+                vx_grid[ci,i,:] = vx_read[start_ind:end_ind]
                 # vx_grid[1,i,:] = vx_read[int((ind+1)*la):int((ind+2)*la)]
                 # vx_grid[2,i,:] = vx_read[int((ind+2)*la):int((ind+3)*la)]
-                vy_grid[ci,i,:] = vy_read[int(ind*la):int((ind+ci+1)*la)]
+                vy_grid[ci,i,:] = vy_read[start_ind:end_ind]
                 # vy_grid[1,i,:] = vy_read[int((ind+1)*la):int((ind+2)*la)]
                 # vy_grid[2,i,:] = vy_read[int((ind+2)*la):int((ind+3)*la)]
 
@@ -155,33 +139,35 @@ class LearningModule:
         # return  alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
     
     def estimate_a0(self):
+
+        #### Estimate a0 and train GP
         X = np.vstack( [self.alpha_grid.flatten(), self.freq_grid.flatten()] ).transpose()
         Y = np.vstack([self.vx_grid.flatten(), self.vy_grid.flatten()]).transpose()
 
         X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.15, random_state=42)
-        # plt.scatter(freq_sim*np.cos(alpha_sim),vy_d)
-        # plt.scatter(freq_sim*np.sin(alpha_sim),vx_d)
+        # plt.scatter(self.freq_sim*np.cos(self.alpha_sim),self.vx_grid.flatten())
+        # plt.scatter(self.freq_sim*np.sin(self.alpha_sim),self.vy_grid.flatten())
         # plt.show()
-        # vx, vy, freq, alpha= num_velocity(time_sim, px_sim, py_sim, freq_sim, alpha_sim)
-
-        # a0_est = esitmate_a0(alpha[0:4000], freq[0:4000], vx[0:4000],vy[0:4000])
-
+        
         a0_est = self.linear_reg(self.alpha_grid.flatten(), self.freq_grid.flatten(), self.vx_grid.flatten(),self.vy_grid.flatten())
-        print(a0_est)
-        # a0_est = linear_reg(alpha, freq, vx, vy)
-        # learn noise and a0 -- note px_desired and py_desired need to be at the same time
-        # mean_vx = (vx_d[600:697]+vx_d[700:797]+vx_d[800:897])/3
-        # mean_vy =(vy_d[600:697]+vy_d[700:797]+vy_d[800:897])/3
+        print('a0_est=',a0_est)
+       
+ 
         self.a0 = a0_est
-        # self.learn(self.vx_grid.flatten(), self.vy_grid.flatten(), self.alpha_grid.flatten(), self.freq_grid.flatten())
-        self.learn( Y_train[:,0], Y_train[:,1], X_train[:,0], X_train[:,1])
+        self.learn(self.vx_grid.flatten(), self.vy_grid.flatten(), self.alpha_grid.flatten(), self.freq_grid.flatten())
+        # self.learn( Y_train[:,0], Y_train[:,1], X_train[:,0], X_train[:,1])
         print('Trainig completed')
+        if self.plot:
+            self.visualize_mu(self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid)
+
+        
 
     
 
     def linear_reg(self, alpha, freq, vx, vy):
-        ux = freq*np.sin(alpha)
-        uy = freq*np.cos(alpha)
+        
+        ux = freq*np.cos(alpha)
+        uy = freq*np.sin(alpha)
 
 
 
@@ -196,16 +182,7 @@ class LearningModule:
         print("a0_x:", model_x.coef_)
         print("D_x:", model_x.intercept_)
 
-        X_new = np.array([[ux.min()], [ux.max()]])  # X values for prediction
-        y_predict = model_x.predict(X_new)
-
-        # Plotting the data points
-        # plt.scatter(ux, vx, color='blue', label='Data points')
-
-        # # Plotting the regression line
-        # plt.plot(X_new, y_predict, color='red', label='Regression line')
-        print("a0_y:", model_y.coef_)
-        print("D_y:", model_y.intercept_)
+       
 
         # Adding labels and title
         # plt.xlabel('Independent variable X')
@@ -215,32 +192,51 @@ class LearningModule:
         # plt.show()
 
 
-        X_new = np.array([[uy.min()], [uy.max()]])  # X values for prediction
-        y_predict = model_y.predict(X_new)
+        
+        if self.plot:
+            X_new_x = np.array([[ux.min()], [ux.max()]])  # X values for prediction
+            y_predict_x = model_x.predict(X_new_x)
 
-        # Plotting the data points
-        # plt.scatter(uy, vy, color='blue', label='Data points')
+            # Plotting the data points
+            plt.scatter(ux, vx, color='blue', label='Data points')
 
-        # # Plotting the regression line
-        # plt.plot(X_new, y_predict, color='red', label='Regression line')
+            # Plotting the regression line
+            plt.plot(X_new_x, y_predict_x, color='red', label='Regression line')
+            print("a0_y:", model_y.coef_)
+            print("D_y:", model_y.intercept_)
+             ### Adding labels and title
+            plt.xlabel('Independent variable X ')
+            plt.ylabel('Dependent variable y')
+            plt.title('Linear Regression_ x axis')
+            plt.legend()
+            plt.show()
 
-        # # Adding labels and title
-        # plt.xlabel('Independent variable X')
-        # plt.ylabel('Dependent variable y')
-        # plt.title('Linear Regression')
-        # plt.legend()
-        # plt.show()
+
+            
+
+            # Plotting the regression line
+            X_new_y = np.array([[uy.min()], [uy.max()]])  # X values for prediction
+            y_predict_y = model_y.predict(X_new_y)
+            plt.plot(X_new_y, y_predict_y, color='red', label='Regression line')
+            print("a0_y:", model_y.coef_)
+            print("D_y:", model_y.intercept_)
+
+           
+            plt.scatter(uy, vy, color='blue', label='Data points')# Plotting the data points
+
+            
+
+            # Adding labels and title
+            plt.xlabel('Independent variable X')
+            plt.ylabel('Dependent variable y')
+            plt.title('Linear Regression y Axis')
+            plt.legend()
+            plt.show()
         a0 =0.5*model_x.coef_[0][0]+0.5*model_y.coef_[0][0]
 
 
         ####Visualize the error
-        # ex = vx-a0*ux
-        # ey = vy-a0*uy
-        # fig, ax = plt.subplots()
-        # ax.plot(alpha[600:697], ex[600:697])
-        # ax.plot(alpha[700:797], ex[700:797])
-        # ax.plot(alpha[800:897], ex[800:897])
-
+       
 
         # freq_grid, alpha_grid = np.meshgrid(freq, alpha)
 
