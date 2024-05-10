@@ -150,6 +150,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.generate_data_button.clicked.connect(self.generate_data_function)
         self.ui.run_algo.clicked.connect(self.run_algorithm)
         self.ui.calibrate_button.clicked.connect(self.go_to_start)
+        self.ui.Trainbutton.clicked.connect(self.train_function)
         #readomg excel file variables        
         self.excel_file_name = None
         self.excel_actions_df = None
@@ -158,6 +159,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.algorithm_status = False
         self.calibrate_status = False
         self.generate_data_status = False
+        self.Train_status = False
 
     def go_to_start(self):
         if self.ui.calibrate_button.isChecked():
@@ -170,7 +172,16 @@ class MainWindow(QtWidgets.QMainWindow):
             self.calibrate_status = False
             self.ui.calibrate_button.setText("Calibrate")
 
+    def train_function(self):
+        if self.ui.Trainbutton.isChecked():
+            self.Train_status = True
+            self.ui.Trainbutton.setText("Stop")
+        else:
+            self.Train_status = False
+            self.ui.Trainbutton.setText("Train")
         
+
+
     def generate_data_function(self):
         if self.ui.generate_data_button.isChecked():
             
@@ -378,7 +389,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.cellmask=cell_mask
 
         
-
+        
         if self.calibrate_status == True:
             if len(robot_list) > 0:
                 curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
@@ -585,7 +596,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.tracker.cropped_frame_signal.connect(self.update_croppedimage)
                 self.tracker.start()
 
-                self.ui.trackbutton.setText("Stop")
+                self.ui.trackbutton.setText("Camera Off")
                 self.ui.VideoFeedLabel.setStyleSheet("background-color: rgb(0,0,0); border:2px solid rgb(0, 255, 0); ")
                 self.ui.CroppedVideoFeedLabel.setStyleSheet("background-color: rgb(0,0,0); border:2px solid rgb(0, 255, 0); ")
         
@@ -595,7 +606,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.ui.CroppedVideoFeedLabel.setStyleSheet("background-color: rgb(0,0,0); border:2px solid rgb(255, 0, 0); ")
         
                 if self.tracker is not None:
-                    self.ui.trackbutton.setText("Track")
+                    self.ui.trackbutton.setText("Camera On")
                     self.tracker.stop()
             
 
