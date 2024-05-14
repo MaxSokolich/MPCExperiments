@@ -143,6 +143,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.generate_data_button.clicked.connect(self.generate_data_function)
         self.ui.run_algo.clicked.connect(self.run_algorithm)
         self.ui.calibrate_button.clicked.connect(self.go_to_start)
+        self.ui.Trainbutton.toggled.connect(self.train_function)
+
+
         #readomg excel file variables        
         self.excel_file_name = None
         self.excel_actions_df = None
@@ -151,6 +154,22 @@ class MainWindow(QtWidgets.QMainWindow):
         self.algorithm_status = False
         self.calibrate_status = False
         self.generate_data_status = False
+        self.train_status = False
+
+
+    def train_function(self):
+        if self.ui.Trainbutton.isChecked():
+            self.train_status = True
+            self.ui.Trainbutton.setText("Stop")
+            print("this will only print once")
+            dataset =  np.load('datasetGP.npy')
+            self.GP.read_data_action(dataset)
+            self.GP.estimate_a0()
+        else:
+
+            self.train_status = False
+            self.ui.Trainbutton.setText("Train")
+
 
     def update_image(self, frame, cell_mask, robot_list):
 
@@ -184,15 +203,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 if self.generate_data.reading_completed :
                     print('data size =', len(self.generate_data.dataset_GP))
                     np.save('datasetGP.npy', np.array(self.generate_data.dataset_GP))
-                    self.GP.read_data_action(self.generate_data.dataset_GP)
-                    self.GP.estimate_a0()
-
-
+                    
 
 
 
         
-        #step 2
+        #step 3
         elif self.calibrate_status == True:
             if len(robot_list) > 0:
                 curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
@@ -211,10 +227,10 @@ class MainWindow(QtWidgets.QMainWindow):
         
 
 
-        #step3       
+        #step 4    
         elif self.algorithm_status == True:
             if len(robot_list) > 0:
-                frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list, frame, self.GP)
+                frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list, frame)
                 self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
 
 
@@ -299,6 +315,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.ui.calibrate_button.isChecked():
             self.calibrate_status = True
             self.ui.calibrate_button.setText("Stop")
+            self.algorithm.load_GP()
+            print("loading GP")
         else:
 
             #when I click stop, it stops the calibration
@@ -316,7 +334,7 @@ class MainWindow(QtWidgets.QMainWindow):
             
             self.generate_data_status = False
             self.ui.generate_data_button.setText("Generate Data")
-            self.generate_data.reset()
+            self.generate_data.reset(self.cycles_gen_data)
       
 
 
