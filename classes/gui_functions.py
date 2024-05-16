@@ -152,7 +152,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.run_algo.clicked.connect(self.run_algorithm)
         self.ui.calibrate_button.clicked.connect(self.go_to_start)
         self.ui.Trainbutton.clicked.connect(self.train_function)
-        #self.ui.Trainbutton.toggled.connect(self.train_function)
+        self.ui.reset_paths.toggled.connect(self.reset_path_function)
 
 
         #readomg excel file variables        
@@ -165,6 +165,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.generate_data_status = False
         self.train_status = False
 
+
+    def reset_path_function(self):
+        if len(self.tracker.robot_list) > 0:
+            self.tracker.robot_list[-1].trajectory.clear()
+        
+            
+        
 
     def train_function(self):
         if self.ui.Trainbutton.isChecked():
@@ -184,7 +191,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def update_image(self, frame, cell_mask, robot_list):
-
+  
         self.cell_mask = cell_mask
         """Updates the image_label with a new opencv image"""
         
@@ -488,7 +495,7 @@ class MainWindow(QtWidgets.QMainWindow):
                             
                             elif self.ui.RRTcheckbox.isChecked():
                                 step_size = 50
-                                pathplanner = RRT(self.cellmask, startpos, endpos, step_size)
+                                pathplanner = RRT(self.cell_mask, startpos, endpos, step_size)
                 
                                 trajectory = pathplanner.run()
                                 trajectory.append(endpos)    
@@ -498,7 +505,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
                             elif self.ui.RRTstarcheckbox.isChecked():
-                                rrt_star = RrtStar(img = self.cellmask, x_start = startpos, x_goal=endpos, step_len=50,
+                                rrt_star = RrtStar(img = self.cell_mask, x_start = startpos, x_goal=endpos, step_len=50,
                                          goal_sample_rate=.1, search_radius=2, iter_max=3000,plotting_flag=True)
                                 
                                 self.tracker.robot_list[-1].trajectory = rrt_star.planning()
@@ -539,13 +546,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
         return super().eventFilter(object, event)
             
-            
 
-    
-
-
-    
-        
 
     
 

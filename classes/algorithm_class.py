@@ -389,9 +389,10 @@ class algorithm:
 
 
         #determines what type of path were following from trajecotry list
-        ref = robot_list[-1].trajectory
-        ref = np.reshape(np.array(ref), [len(ref),2])
-        self.ref = ref
+        if len(robot_list[-1].trajectory) > 0:
+            ref = robot_list[-1].trajectory
+            ref = np.reshape(np.array(ref), [len(ref),2])
+            self.ref = ref
         
 
         current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
