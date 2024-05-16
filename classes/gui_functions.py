@@ -96,10 +96,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.arduino = ArduinoHandler(self.tbprint)
         self.arduino.connect(PORT)
         self.algorithm = algorithm()
-        self.generate_data = gen_data()
+        self.cycles_gen_data = 3
+        self.generate_data = gen_data(self.cycles_gen_data)
         self.calibration_coord = [self.algorithm.init_point_x, self.algorithm.init_point_y]
 
-        self.GP = LearningModule()
+        self.GP = LearningModule(self.cycles_gen_data)
 
         self.zoom_x, self.zoom_y, self.zoomscale, self.scrollamount = 1,0,0,0
         self.croppedresult = None

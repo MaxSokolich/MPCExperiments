@@ -14,7 +14,7 @@ class algorithm:
         self.alpha_ls = [0]
         self.freq_ls = [0]
 
-        self.gp= LearningModule(3)
+        self.gp = LearningModule(3)
         
         # self.gp_sim = GP.LearningModule()
 
@@ -160,7 +160,7 @@ class algorithm:
     def sim(self):
         
 
-        gp_sim = GP.LearningModule()
+        gp_sim = self.gp.LearningModule()
 
     
         # gp_sim.load_GP()
@@ -389,9 +389,9 @@ class algorithm:
 
 
         #determines what type of path were following from trajecotry list
-        # ref = robot_list[-1].trajectory
-        # ref = np.reshape(np.array(ref), [len(ref),2])
-        # self.ref = ref
+        ref = robot_list[-1].trajectory
+        ref = np.reshape(np.array(ref), [len(ref),2])
+        self.ref = ref
         
 
         current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
