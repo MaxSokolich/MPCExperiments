@@ -12,12 +12,14 @@ import cv2
 
 class gen_data:
     def __init__(self,cycles):
+
         self.reset(cycles)
         
         
 
         
     def reset(self,cycles):
+ 
         self.counter = 0
         self.cycles = cycles#train my moving in 3 circles
         ### freq range for gen data
@@ -82,6 +84,7 @@ class gen_data:
             acoustic_freq = 0
             self.run_calibration_status = False
             self.reading_actions = True
+         
             
         else:
             self.run_calibration_status = True
@@ -99,10 +102,6 @@ class gen_data:
 
     def run(self): #this executes at every frame
 
-        
-       
-        
-    
             
         if self.counter < len(self.actions_learn):
                 
