@@ -45,7 +45,7 @@ class VideoThread(QThread):
         self.robot_mask_upper = 128
         self.robot_mask_dilation = 0  
         self.robot_mask_blur = 0
-        self.robot_crop_length = 40
+        self.robot_crop_length =120
         self.robot_mask_flag = True
         self.robot_list = []
 
