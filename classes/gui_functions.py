@@ -28,6 +28,8 @@ try:
 except Exception:
     pass
 
+from classes.rrt_star_class import RrtStar
+from classes.rrt_class import RRT
 from classes.tracker_class import VideoThread
 from classes.gui_widgets import Ui_MainWindow
 from classes.arduino_class import ArduinoHandler
@@ -94,11 +96,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.arduino = ArduinoHandler(self.tbprint)
         self.arduino.connect(PORT)
         self.algorithm = algorithm()
-        self.cycles_gen_data= 3
-        self.generate_data = gen_data(self.cycles_gen_data)
+        self.generate_data = gen_data()
         self.calibration_coord = [self.algorithm.init_point_x, self.algorithm.init_point_y]
 
-        self.GP = LearningModule(self.cycles_gen_data)
+        self.GP = LearningModule()
 
         self.zoom_x, self.zoom_y, self.zoomscale, self.scrollamount = 1,0,0,0
         self.croppedresult = None
@@ -127,6 +128,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.robotmaskdilationbox.valueChanged.connect(self.get_slider_vals)
         self.ui.robotmaskblurbox.valueChanged.connect(self.get_slider_vals)
         self.ui.robotcroplengthbox.valueChanged.connect(self.get_slider_vals)
+
+        self.ui.cellmasklowerbox.valueChanged.connect(self.get_slider_vals)
+        self.ui.cellmaskupperbox.valueChanged.connect(self.get_slider_vals)
+        self.ui.cellmaskdilationbox.valueChanged.connect(self.get_slider_vals)
+        self.ui.cellmaskblurbox.valueChanged.connect(self.get_slider_vals)
+        self.ui.cellcroplengthbox.valueChanged.connect(self.get_slider_vals)
       
 
 
@@ -143,6 +150,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.generate_data_button.clicked.connect(self.generate_data_function)
         self.ui.run_algo.clicked.connect(self.run_algorithm)
         self.ui.calibrate_button.clicked.connect(self.go_to_start)
+        self.ui.Trainbutton.clicked.connect(self.train_function)
         #readomg excel file variables        
         self.excel_file_name = None
         self.excel_actions_df = None
@@ -151,149 +159,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.algorithm_status = False
         self.calibrate_status = False
         self.generate_data_status = False
-
-    def update_image(self, frame, cell_mask, robot_list):
-
-        self.cell_mask = cell_mask
-        """Updates the image_label with a new opencv image"""
-        #step 1
-        if self.generate_data_status == True and self.generate_data.run_calibration_status == True: 
-            if len(robot_list) > 0:
-                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run_calibration(robot_list)
-
-                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
-        
-
-        elif self.generate_data_status == True and self.generate_data.run_calibration_status == False:
-            if len(robot_list) > 0:
-            
-                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run()
-                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
-                if self.generate_data.reading_actions == True:
-                    #in here save data
-                    time = robot_list[-1].times[-1]
-                    px = robot_list[-1].position_list[-1][0]
-                    py = robot_list[-1].position_list[-1][1]
-                    vx = robot_list[-1].velocity_list[-1][0]
-                    vy = robot_list[-1].velocity_list[-1][1]
-                    alpha = alpha
-                    freq = freq
-
-                    #save current state to dataset
-                    self.generate_data.dataset_GP.append([time, px,py,vx,vy, alpha, freq])
-                if self.generate_data.reading_completed :
-                    print('data size =', len(self.generate_data.dataset_GP))
-                    np.save('datasetGP.npy', np.array(self.generate_data.dataset_GP))
-                    self.GP.read_data_action(self.generate_data.dataset_GP)
-                    self.GP.estimate_a0()
-
-
-
-
-
-        
-        #step 2
-        elif self.calibrate_status == True:
-            if len(robot_list) > 0:
-                curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
-                
-                #print(curernt_pos)
-
-                direction_vec = [self.calibration_coord[0] - curernt_pos[0], self.calibration_coord[1] - curernt_pos[1]]
-                error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
-                start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
-                
-                if error < 5:
-                    self.arduino.send(0,0,0,0,0,0,0,0,0)
-                else:
-                    self.arduino.send(0,0,0,start_alpha,np.pi/2,10,np.pi/2,0,0)
-        
-        
-
-
-        #step3       
-        elif self.algorithm_status == True:
-            if len(robot_list) > 0:
-                frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list, frame, self.GP)
-                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
-
-
-
-
-        elif self.excel_actions_status == True and self.excel_actions_df is not None:
-            
-            self.actions_counter +=1
-
-            if self.actions_counter < self.excel_actions_df['Frame'].iloc[-1]:
-                filtered_row = self.excel_actions_df[self.excel_actions_df['Frame'] == self.actions_counter]
-            
-                Bx = float(filtered_row["Bx"])
-                By = float(filtered_row["By"])
-                Bz = float(filtered_row["Bz"])
-                alpha = float(filtered_row["Alpha"])
-                gamma = float(filtered_row["Gamma"])
-                freq = float(filtered_row["Rolling Frequency"])
-                psi = float(filtered_row["Psi"])
-                gradient = float(filtered_row["Gradient"])
-                acoustic_freq = float(filtered_row["Acoustic Frequency"])
-                self.arduino.send(Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq)
-            
-            else:
-                self.excel_actions_status = False
-                self.ui.apply_actions.setText("Apply")
-                self.ui.apply_actions.setChecked(False)
-                self.arduino.send(0,0,0,0,0,0,0,0,0)
-        else:
-            self.arduino.send(0,0,0,0,0,0,0,0,0)  #zeros everything
-            
-        
-        
-        #DEFINE CURRENT ROBOT PARAMS TO A LIST
-       
-        if len(robot_list) > 0:
-            self.robots = []
-            for bot in robot_list:
-                currentbot_params = [bot.frame_list[-1],
-                                     bot.times[-1],
-                                     bot.position_list[-1][0],bot.position_list[-1][1], 
-                                     bot.velocity_list[-1][0], bot.velocity_list[-1][1],bot.velocity_list[-1][2],
-                                     bot.blur_list[-1],
-                                     bot.area_list[-1],
-                                     bot.avg_area,
-                                     bot.cropped_frame[-1][0],bot.cropped_frame[-1][1],bot.cropped_frame[-1][2],bot.cropped_frame[-1][3],
-                                     bot.stuck_status_list[-1],
-                                     bot.trajectory,
-                                    ]
-                
-                self.robots.append(currentbot_params)
-        
-        #IF SAVE STATUS THEN CONTINOUSLY SAVE THE CURRENT ROBOT PARAMS AND MAGNETIC FIELD PARAMS TO AN EXCEL ROWS
-        if self.save_status == True:
-            for (sheet, bot) in zip(self.robot_params_sheets,self.robots):
-                sheet.append(bot[:-1])
-
-
-
-        #HANDLE THE FRAME CAPTURE
-        
-        
-
-        frame = self.handle_zoom(frame)
-
-        self.currentframe = frame
-    
-        rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgb_image.shape
-      
-        bytes_per_line = ch * w
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
-        qt_img = QPixmap.fromImage(p)
-
-       
-        self.ui.VideoFeedLabel.setPixmap(qt_img)
-        
-        
+        self.Train_status = False
 
     def go_to_start(self):
         if self.ui.calibrate_button.isChecked():
@@ -306,17 +172,25 @@ class MainWindow(QtWidgets.QMainWindow):
             self.calibrate_status = False
             self.ui.calibrate_button.setText("Calibrate")
 
+    def train_function(self):
+        if self.ui.Trainbutton.isChecked():
+            self.Train_status = True
+            self.ui.Trainbutton.setText("Stop")
+        else:
+            self.Train_status = False
+            self.ui.Trainbutton.setText("Train")
         
+
+
     def generate_data_function(self):
         if self.ui.generate_data_button.isChecked():
             
             self.generate_data_status = True
             self.ui.generate_data_button.setText("Stop")
         else:
-            
+
             self.generate_data_status = False
             self.ui.generate_data_button.setText("Generate Data")
-            self.generate_data.reset()
       
 
 
@@ -445,14 +319,33 @@ class MainWindow(QtWidgets.QMainWindow):
                         self.drawing = True
                         newx, newy = self.convert_coords(event.pos())
                         if len(self.tracker.robot_list) > 0:
-                            #self.tracker.robot_list[-1].add_trajectory([newx, newy])
-                            self.algorithm.goal = np.array([newx,newy])
+                            startpos = self.tracker.robot_list[-1].position_list[-1]
+                            endpos = [newx, newy]
+                     
+                            if self.ui.drawingcheckbox.isChecked():
+                                self.tracker.robot_list[-1].add_trajectory(startpos)
+                            
+                            elif self.ui.RRTcheckbox.isChecked():
+                                step_size = 50
+                                pathplanner = RRT(self.cellmask, startpos, endpos, step_size)
                 
+                                trajectory = pathplanner.run()
+                                trajectory.append(endpos)    
+                            
+                                #record robot list trajectory
+                                self.tracker.robot_list[-1].trajectory= trajectory
+
+
+                            elif self.ui.RRTstarcheckbox.isChecked():
+                                rrt_star = RrtStar(img = self.cellmask, x_start = startpos, x_goal=endpos, step_len=50,
+                                         goal_sample_rate=.1, search_radius=2, iter_max=3000,plotting_flag=True)
+                                
+                                self.tracker.robot_list[-1].trajectory = rrt_star.planning()
+                            
                 
                     if event.buttons() == QtCore.Qt.MiddleButton: 
                         del self.tracker.robot_list[:]
                         del self.robots[:]
-                        self.generate_data.reset(self.cycles_gen_data)
             
                        
                     
@@ -463,9 +356,11 @@ class MainWindow(QtWidgets.QMainWindow):
                     if event.buttons() == QtCore.Qt.RightButton:
                         if self.drawing == True:
                             if len(self.tracker.robot_list)>0:
-                                newx, newy = self.convert_coords(event.pos())
-                                
-                                self.tracker.robot_list[-1].add_trajectory([newx, newy])
+                                if self.ui.drawingcheckbox.isChecked():
+                               
+                                    newx, newy = self.convert_coords(event.pos())
+                                    
+                                    self.tracker.robot_list[-1].add_trajectory([newx, newy])
                   
                                                                
                 
@@ -485,10 +380,117 @@ class MainWindow(QtWidgets.QMainWindow):
             
             
 
-
-
-
     
+
+
+    def update_image(self, frame, cell_mask, robot_list):
+        """Updates the image_label with a new opencv image"""
+        
+        self.cellmask=cell_mask
+
+        
+        
+        if self.calibrate_status == True:
+            if len(robot_list) > 0:
+                curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
+                
+                #print(curernt_pos)
+
+                direction_vec = [self.calibration_coord[0] - curernt_pos[0], self.calibration_coord[1] - curernt_pos[1]]
+                error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
+                start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
+                
+                if error < 5:
+                    self.arduino.send(0,0,0,0,0,0,0,0,0)
+                else:
+                    self.arduino.send(0,0,0,start_alpha,np.pi/2,10,np.pi/2,0,0)
+        
+        
+
+
+        #step3       
+        elif self.algorithm_status == True:
+            if len(robot_list) > 0:
+                frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list, frame)
+                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
+
+
+
+
+        elif self.excel_actions_status == True and self.excel_actions_df is not None:
+            
+            self.actions_counter +=1
+
+            if self.actions_counter < self.excel_actions_df['Frame'].iloc[-1]:
+                filtered_row = self.excel_actions_df[self.excel_actions_df['Frame'] == self.actions_counter]
+            
+                Bx = float(filtered_row["Bx"])
+                By = float(filtered_row["By"])
+                Bz = float(filtered_row["Bz"])
+                alpha = float(filtered_row["Alpha"])
+                gamma = float(filtered_row["Gamma"])
+                freq = float(filtered_row["Rolling Frequency"])
+                psi = float(filtered_row["Psi"])
+                gradient = float(filtered_row["Gradient"])
+                acoustic_freq = float(filtered_row["Acoustic Frequency"])
+                self.arduino.send(Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq)
+            
+            else:
+                self.excel_actions_status = False
+                self.ui.apply_actions.setText("Apply")
+                self.ui.apply_actions.setChecked(False)
+                self.arduino.send(0,0,0,0,0,0,0,0,0)
+        else:
+            self.arduino.send(0,0,0,0,0,0,0,0,0)  #zeros everything
+            
+        
+        
+        #DEFINE CURRENT ROBOT PARAMS TO A LIST
+       
+        if len(robot_list) > 0:
+            self.robots = []
+            for bot in robot_list:
+                currentbot_params = [bot.frame_list[-1],
+                                     bot.times[-1],
+                                     bot.position_list[-1][0],bot.position_list[-1][1], 
+                                     bot.velocity_list[-1][0], bot.velocity_list[-1][1],bot.velocity_list[-1][2],
+                                     bot.blur_list[-1],
+                                     bot.area_list[-1],
+                                     bot.avg_area,
+                                     bot.cropped_frame[-1][0],bot.cropped_frame[-1][1],bot.cropped_frame[-1][2],bot.cropped_frame[-1][3],
+                                     bot.stuck_status_list[-1],
+                                     bot.trajectory,
+                                    ]
+                
+                self.robots.append(currentbot_params)
+        
+        #IF SAVE STATUS THEN CONTINOUSLY SAVE THE CURRENT ROBOT PARAMS AND MAGNETIC FIELD PARAMS TO AN EXCEL ROWS
+        if self.save_status == True:
+            for (sheet, bot) in zip(self.robot_params_sheets,self.robots):
+                sheet.append(bot[:-1])
+
+
+
+        #HANDLE THE FRAME CAPTURE
+        
+        
+
+        frame = self.handle_zoom(frame)
+
+        self.currentframe = frame
+    
+        rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb_image.shape
+      
+        bytes_per_line = ch * w
+        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
+        qt_img = QPixmap.fromImage(p)
+
+       
+        self.ui.VideoFeedLabel.setPixmap(qt_img)
+        
+        
 
     
 
@@ -592,10 +594,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.tracker = VideoThread(self)
                 self.tracker.change_pixmap_signal.connect(self.update_image)
                 self.tracker.cropped_frame_signal.connect(self.update_croppedimage)
-                #self.tracker.robot_list_signal.connect(self.update_actions)
                 self.tracker.start()
 
-                self.ui.trackbutton.setText("Stop")
+                self.ui.trackbutton.setText("Camera Off")
                 self.ui.VideoFeedLabel.setStyleSheet("background-color: rgb(0,0,0); border:2px solid rgb(0, 255, 0); ")
                 self.ui.CroppedVideoFeedLabel.setStyleSheet("background-color: rgb(0,0,0); border:2px solid rgb(0, 255, 0); ")
         
@@ -605,7 +606,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.ui.CroppedVideoFeedLabel.setStyleSheet("background-color: rgb(0,0,0); border:2px solid rgb(255, 0, 0); ")
         
                 if self.tracker is not None:
-                    self.ui.trackbutton.setText("Track")
+                    self.ui.trackbutton.setText("Camera On")
                     self.tracker.stop()
             
 
@@ -670,6 +671,12 @@ class MainWindow(QtWidgets.QMainWindow):
         robotmaskblur = self.ui.robotmaskblurbox.value()
         robotcrop_length = self.ui.robotcroplengthbox.value()
 
+        celllower = self.ui.cellmasklowerbox.value() 
+        cellupper = self.ui.cellmaskupperbox.value()
+        celldilation = self.ui.cellmaskdilationbox.value() 
+        cellmaskblur = self.ui.cellmaskblurbox.value()
+        cellcrop_length = self.ui.cellcroplengthbox.value()
+
 
         if self.tracker is not None: 
 
@@ -678,6 +685,12 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tracker.robot_mask_dilation = robotdilation
             self.tracker.robot_mask_blur = robotmaskblur
             self.tracker.robot_crop_length = robotcrop_length
+
+            self.tracker.cell_mask_lower = celllower
+            self.tracker.cell_mask_upper = cellupper
+            self.tracker.cell_mask_dilation = celldilation
+            self.tracker.cell_mask_blur = cellmaskblur
+            self.tracker.cell_crop_length = cellcrop_length
 
 
 
@@ -691,6 +704,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.robotcroplengthbox.setValue(40)
         self.ui.objectivebox.setValue(10)
         self.ui.exposurebox.setValue(5000)
+
+        self.ui.cellmasklowerbox.setValue(0)
+        self.ui.cellmaskupperbox.setValue(128)
+        self.ui.cellmaskdilationbox.setValue(0)
+        self.ui.cellmaskblurbox.setValue(0)
+        self.ui.cellcroplengthbox.setValue(40)
         
 
     def resizeEvent(self, event):
