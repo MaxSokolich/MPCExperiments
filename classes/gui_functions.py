@@ -193,6 +193,8 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_image(self, frame, cell_mask, robot_list):
   
         self.cell_mask = cell_mask
+        alpha = 0
+        freq = 0
         """Updates the image_label with a new opencv image"""
         
         #step 1
@@ -239,12 +241,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 direction_vec = [self.calibration_coord[0] - curernt_pos[0], self.calibration_coord[1] - curernt_pos[1]]
                 error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
-                start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
-                
+                alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
+                freq = 10
                 if error < 5:
                     self.arduino.send(0,0,0,0,0,0,0,0,0)
                 else:
-                    self.arduino.send(0,0,0,start_alpha,np.pi/2,10,np.pi/2,0,0)
+                    self.arduino.send(0,0,0,alpha,np.pi/2,freq,np.pi/2,0,0)
         
         
 
@@ -281,8 +283,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.ui.apply_actions.setText("Apply")
                 self.ui.apply_actions.setChecked(False)
                 self.arduino.send(0,0,0,0,0,0,0,0,0)
+                alpha = 0
+                freq = 0
         else:
             self.arduino.send(0,0,0,0,0,0,0,0,0)  #zeros everything
+            alpha = 0
+            freq = 0
             
         
         
@@ -293,6 +299,8 @@ class MainWindow(QtWidgets.QMainWindow):
             for bot in robot_list:
                 currentbot_params = [bot.frame_list[-1],
                                      bot.times[-1],
+                                     alpha,
+                                     freq,
                                      bot.position_list[-1][0],bot.position_list[-1][1], 
                                      bot.velocity_list[-1][0], bot.velocity_list[-1][1],bot.velocity_list[-1][2],
                                      bot.blur_list[-1],
@@ -403,7 +411,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.robot_params_sheets = []
         for i in range(len(self.robots)):
             robot_sheet = self.output_workbook.create_sheet(title= "Robot {}".format(i+1))
-            robot_sheet.append(["Frame","Times","Pos X", "Pos Y", "Vel X", "Vel Y", "Vel Mag", "Blur", "Area", "Avg Area", "Cropped X","Cropped Y","Cropped W","Cropped H","Stuck?","Path X", "Path Y"])
+            robot_sheet.append(["Frame","Times","Alpha","Freq","Pos X", "Pos Y", "Vel X", "Vel Y", "Vel Mag", "Blur", "Area", "Avg Area", "Cropped X","Cropped Y","Cropped W","Cropped H","Stuck?","Path X", "Path Y"])
             self.robot_params_sheets.append(robot_sheet)
         
 
@@ -423,8 +431,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 try:
                     for i in range(len((self.robot_params_sheets))):
                         for idx,(x,y) in enumerate(self.robots[i][-1]):
-                            self.robot_params_sheets[i].cell(row=idx+2, column=16).value = x
-                            self.robot_params_sheets[i].cell(row=idx+2, column=17).value = y
+                            self.robot_params_sheets[i].cell(row=idx+2, column=18).value = x
+                            self.robot_params_sheets[i].cell(row=idx+2, column=19).value = y
                 except Exception:
                     pass
        
