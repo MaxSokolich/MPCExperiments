@@ -1,7 +1,7 @@
 
 import numpy as np
 import sys
-import classes.Learning_module_2d as GP # type: ignore
+from classes.Learning_module_2d import LearningModule # type: ignore
 from classes.MR_simulator import Simulator
 import math 
 from classes.MPC import  MPC
@@ -14,12 +14,11 @@ class algorithm:
         self.alpha_ls = [0]
         self.freq_ls = [0]
 
+        self.gp = LearningModule(3)
         
         # self.gp_sim = GP.LearningModule()
 
-        # self.gp_sim.load_GP()
-        # self.a0_sim = np.load('classes/a0_est.npy')
-        self.a0_sim = 172
+        self.a0_sim = np.load('a0_est.npy')
 
         # freq = 4
         # a0_def = 1.5
@@ -79,7 +78,7 @@ class algorithm:
         # Weight matrices for state and input
         Q = np.array([[1,0],[0,1]])
         R = 0.01*np.array([[1,0],[0,1]])
-        self.N = 10
+        self.N = 4
         self.mpc = MPC(A= A, B=B, N=self.N, Q=Q, R=R)
 
 
@@ -112,6 +111,11 @@ class algorithm:
         
     def reset(self):
         self.counter = 0
+    
+    def load_GP(self):
+        
+        self.gp.load_GP()
+        
 
     def correct_position(self, robot_list):
         microrobot_latest_position_x = robot_list[-1].position_list[-1][0]
@@ -156,7 +160,7 @@ class algorithm:
     def sim(self):
         
 
-        gp_sim = GP.LearningModule()
+        gp_sim = self.gp.LearningModule()
 
     
         # gp_sim.load_GP()
@@ -345,7 +349,7 @@ class algorithm:
         for i in range(len(node_ls)-1):
             start_point, end_point = node_ls[i], node_ls[i+1]
             length = np.linalg.norm(end_point-start_point)
-            num_points_per_segment= int(1.2*length/5)
+            num_points_per_segment= int(2*length/5)
             # Generate a sequence of numbers between 0 and 1, which will serve as interpolation factors.
             interpolation_factors = np.linspace(0, 1, num_points_per_segment + 2)
             
@@ -377,7 +381,7 @@ class algorithm:
     
 
 
-    def run(self, robot_list, frame, GP): #this executes at every frame
+    def run(self, robot_list, frame): #this executes at every frame
 
         self.counter += 1
 
@@ -385,9 +389,10 @@ class algorithm:
 
 
         #determines what type of path were following from trajecotry list
-        ref = robot_list[-1].trajectory
-        ref = np.reshape(np.array(ref), [len(ref),2])
-        self.ref = ref
+        if len(robot_list[-1].trajectory) > 0:
+            ref = robot_list[-1].trajectory
+            ref = np.reshape(np.array(ref), [len(ref),2])
+            self.ref = ref
         
 
         current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
@@ -423,13 +428,16 @@ class algorithm:
             self.f_t, self.alpha_t = 0,0
             path = []
         else:
-            alpha_GP = np.pi/2-self.alpha_ls[-1]
+            alpha_GP = -np.pi/2-self.alpha_ls[-1]
             freq_GP = self.freq_ls [-1]
-            muX,sigX = GP.gprX.predict(np.array([[alpha_GP, freq_GP]]), return_std=True)
-            muY,sigY = GP.gprY.predict(np.array([[alpha_GP, freq_GP]]), return_std=True)
+            muX,sigX = self.gp.gprX.predict(np.array([[alpha_GP, freq_GP]]), return_std=True)
+            muY,sigY = self.gp.gprY.predict(np.array([[alpha_GP, freq_GP]]), return_std=True)
             # D = np.array([gp_sim.Dx, gp_sim.Dy])
-            v_e = np.array([muX[0], muY[0]])
-            
+            try:
+                v_e = np.array([muX[0], muY[0]])
+            except Exception:
+                v_e = np.array([0,0])
+            # v_e = np.array([0,0])
             u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, v_e)
             path = current_ref
             print('u_mpc = ', u_mpc)
@@ -473,7 +481,7 @@ class algorithm:
         
         #plot ref
         ref_pts = np.array(self.ref, np.int32)
-        cv2.polylines(frame, [ref_pts], False, (100, 100, 100), 1)
+        cv2.polylines(frame, [ref_pts], False, (100, 100, 100), 4)
         # print('ref = ', path)
         # print('pred_trj = ', pred_traj)
 

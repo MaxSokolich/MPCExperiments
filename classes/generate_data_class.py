@@ -12,17 +12,19 @@ import cv2
 
 class gen_data:
     def __init__(self,cycles):
+
         self.reset(cycles)
         
         
 
         
     def reset(self,cycles):
+ 
         self.counter = 0
         self.cycles = cycles#train my moving in 3 circles
         ### freq range for gen data
         self.f_min = 0
-        self.f_max =7 
+        self.f_max =5
         self.frange_size = self.f_max-self.f_min +1 
         self.run_calibration_status = True
         self.robot_list = None
@@ -66,7 +68,7 @@ class gen_data:
         
         #print(curernt_pos)
 
-        direction_vec = [1800 - curernt_pos[0], 1200 - curernt_pos[1]]
+        direction_vec = [1900 - curernt_pos[0], 1600 - curernt_pos[1]]
         error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
         start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
         
@@ -82,6 +84,7 @@ class gen_data:
             acoustic_freq = 0
             self.run_calibration_status = False
             self.reading_actions = True
+         
             
         else:
             self.run_calibration_status = True
@@ -99,10 +102,6 @@ class gen_data:
 
     def run(self): #this executes at every frame
 
-        
-       
-        
-    
             
         if self.counter < len(self.actions_learn):
                 

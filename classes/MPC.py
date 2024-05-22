@@ -27,7 +27,7 @@ class MPC:
         self.Q = Q
         self.R = R
 
-        control_bound = 7
+        control_bound = 5
         self.umax =  control_bound
         self.umin = -control_bound
 

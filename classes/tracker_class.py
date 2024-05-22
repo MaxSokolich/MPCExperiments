@@ -45,7 +45,7 @@ class VideoThread(QThread):
         self.robot_mask_upper = 128
         self.robot_mask_dilation = 0  
         self.robot_mask_blur = 0
-        self.robot_crop_length = 40
+        self.robot_crop_length =120
         self.robot_mask_flag = True
         self.robot_list = []
 
@@ -63,7 +63,7 @@ class VideoThread(QThread):
         self.crop_length_record = 200
         
         self.exposure = 5000
-        self.objective = 10
+        self.objective = 4
 
 
         self.arrivalthresh = 100
@@ -194,8 +194,8 @@ class VideoThread(QThread):
 
                         #find velocity:
                         if len(bot.position_list) > self.memory:
-                            vx = (current_pos[0] - bot.position_list[-self.memory][0]) * (self.fps.get_fps()/self.memory) / self.pix2metric
-                            vy = (current_pos[1] - bot.position_list[-self.memory][1]) * (self.fps.get_fps()/self.memory) / self.pix2metric
+                            vx = (current_pos[0] - bot.position_list[-self.memory][0]) * (self.fps.get_fps()/self.memory) 
+                            vy = (current_pos[1] - bot.position_list[-self.memory][1]) * (self.fps.get_fps()/self.memory) 
                             magnitude = np.sqrt(vx**2 + vy**2)
 
                             velocity = [vx,vy,magnitude]

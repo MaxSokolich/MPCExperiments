@@ -55,7 +55,7 @@ class LearningModule:
         self.f = 0
         self.Dx = 0
         self.Dy = 0
-        self.plot = True
+        self.plot = False
         self.cycle = cycle
 
     
@@ -63,6 +63,7 @@ class LearningModule:
         self.gprY = joblib.load('classes/gpY_2d.pkl')
         self.gprX = joblib.load('classes/gpX_2d.pkl')
         print('GP is loaded')
+        self.a0_sim = np.load('classes/a0_est.npy')
 
     def visualize_mu(self, alpha_grid, freq_grid ,vx_grid, vy_grid):
         error_x = vx_grid - self.a0 * freq_grid * np.sin(alpha_grid)
@@ -99,16 +100,17 @@ class LearningModule:
         plt.show()
 
 
-    def read_data_action(self, data):
+    def read_data_action(self, data, obj):
         # If you are not sure about the sheet names, you can list all sheet names like this
         # cycle = 1
-        sc_factor = 0.28985
+        # sc_factor = 0.28985 * obj
+        sc_factor = 0.28985 * obj
         # To read a specific sheet by name
         data = np.array(data)
         freq_read = data[:,-1]
         alpha_read = np.pi/2-data[:,-2]
-        vx_read = data[:,3]/sc_factor
-        vy_read = -data[:,4]/sc_factor
+        vx_read = data[:,3]
+        vy_read = -data[:,4]
         freq_ls = np.unique(freq_read)
         alpha_ls = np.unique(alpha_read)
 
@@ -151,6 +153,7 @@ class LearningModule:
         
         a0_est = self.linear_reg(self.alpha_grid.flatten(), self.freq_grid.flatten(), self.vx_grid.flatten(),self.vy_grid.flatten())
         print('a0_est=',a0_est)
+        np.save('a0_est.npy', a0_est)
        
  
         self.a0 = a0_est
@@ -181,6 +184,11 @@ class LearningModule:
         # Display the coefficients
         print("a0_x:", model_x.coef_)
         print("D_x:", model_x.intercept_)
+
+
+
+        print("a0_y:", model_y.coef_)
+        print("D_y:", model_y.intercept_)
 
        
 

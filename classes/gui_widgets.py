@@ -234,7 +234,7 @@ class Ui_MainWindow(object):
         self.framelabel_4.setMaximumSize(QtCore.QSize(300, 25))
         self.framelabel_4.setObjectName("framelabel_4")
         self.recordbutton = QtWidgets.QPushButton(self.frame_3)
-        self.recordbutton.setGeometry(QtCore.QRect(220, 80, 81, 71))
+        self.recordbutton.setGeometry(QtCore.QRect(210, 60, 81, 71))
         self.recordbutton.setStyleSheet("QPushButton {\n"
 "                color: rgb(255, 255, 255);\n"
 "                background-color: rgb(0, 0, 0);\n"
@@ -318,6 +318,29 @@ class Ui_MainWindow(object):
         self.framelabel_5.setGeometry(QtCore.QRect(10, 160, 51, 21))
         self.framelabel_5.setMaximumSize(QtCore.QSize(300, 25))
         self.framelabel_5.setObjectName("framelabel_5")
+        self.reset_paths = QtWidgets.QPushButton(self.frame_3)
+        self.reset_paths.setGeometry(QtCore.QRect(210, 160, 81, 31))
+        self.reset_paths.setStyleSheet("QPushButton {\n"
+"                color: rgb(255, 255, 255);\n"
+"                background-color: rgb(0, 0, 0);\n"
+"                border-style: outset;\n"
+"                border-width: 3px;\n"
+"                border-radius: 10px;\n"
+"                border-color: rgb(0, 0, 0);\n"
+"                min-width: 1em;\n"
+"                padding: 6px;\n"
+"            }\n"
+"      \n"
+" \n"
+"            QPushButton:hover {\n"
+"                background-color: rgb(100, 100, 100);\n"
+"                color: rgb(255, 255, 255);\n"
+"                border-color: rgb(100, 100, 100);\n"
+"                padding-left: 5px;\n"
+"                padding-top: 5px;\n"
+"            }")
+        self.reset_paths.setCheckable(True)
+        self.reset_paths.setObjectName("reset_paths")
         self.robotparamsframe = QtWidgets.QFrame(self.dockWidgetContents)
         self.robotparamsframe.setGeometry(QtCore.QRect(10, 549, 311, 61))
         self.robotparamsframe.setStyleSheet(" color: rgb(255, 255, 255);\n"
@@ -732,6 +755,7 @@ class Ui_MainWindow(object):
         self.RRTstarcheckbox.setText(_translate("MainWindow", "RRT*"))
         self.Trainbutton.setText(_translate("MainWindow", "Train"))
         self.framelabel_5.setText(_translate("MainWindow", "step 4:"))
+        self.reset_paths.setText(_translate("MainWindow", "reset path"))
         self.robotsizelabel.setText(_translate("MainWindow", "Size:   "))
         self.robotvelocitylabel.setText(_translate("MainWindow", "Velocity: "))
         self.robotblurlabel.setText(_translate("MainWindow", "Blur:"))
