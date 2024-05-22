@@ -180,6 +180,7 @@ class MainWindow(QtWidgets.QMainWindow):
             print("this will only print once")
             dataset =  np.load('datasetGP.npy')
             self.GP.read_data_action(dataset, self.tracker.objective)
+       
             self.GP.estimate_a0()
         else:
 
