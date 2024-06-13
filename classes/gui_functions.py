@@ -88,7 +88,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         elif "Windows" in platform.platform():
             self.tbprint("Detected OS:  Windows")
-            PORT = "COM3"
+            PORT = "COM4"
         else:
             self.tbprint("undetected operating system")
             PORT = None
@@ -225,6 +225,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                     #save current state to dataset
                     self.generate_data.dataset_GP.append([time, px,py,vx,vy, alpha, freq])
+                
                 if self.generate_data.reading_completed :
                     print('data size =', len(self.generate_data.dataset_GP))
                     np.save('datasetGP.npy', np.array(self.generate_data.dataset_GP))

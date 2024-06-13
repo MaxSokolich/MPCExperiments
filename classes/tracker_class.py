@@ -42,10 +42,10 @@ class VideoThread(QThread):
         
         #robot mask attributes
         self.robot_mask_lower = 0
-        self.robot_mask_upper = 128
+        self.robot_mask_upper = 150
         self.robot_mask_dilation = 0  
         self.robot_mask_blur = 0
-        self.robot_crop_length =120
+        self.robot_crop_length =80
         self.robot_mask_flag = True
         self.robot_list = []
 
@@ -210,7 +210,10 @@ class VideoThread(QThread):
                         #store the data in the instance of RobotClasss
                         bot.add_frame(self.framenum)
                         bot.add_time(1/self.fps.get_fps()) #original in ms
+
                         bot.add_position([current_pos[0], current_pos[1]])
+
+
                         bot.add_velocity(velocity)
                         bot.add_crop(new_crop)
                         bot.add_area(area)

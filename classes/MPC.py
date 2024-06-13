@@ -154,7 +154,11 @@ class MPC:
     def convert_control(self, u_mpc):
 
         f_t = np.linalg.norm(u_mpc)
-        alpha_t = math.atan2(-u_mpc[1], u_mpc[0]) - np.pi/2
+        #alpha_t = math.atan2(-u_mpc[1], u_mpc[0]) - np.pi/2
+        alpha_t = math.atan2(u_mpc[1], u_mpc[0]) - np.pi/2
+        
+        #alpha_t = np.pi 
+        #f_t = 5
         return f_t, alpha_t
                 
             

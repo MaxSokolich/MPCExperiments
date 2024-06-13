@@ -73,7 +73,7 @@ class algorithm:
 
         ########MPC parameters
         # B  = self.a0_sim*self.dt*np.array([[1,0],[0,1]])
-        B  = self.a0_sim*np.array([[1,0],[0,1]])
+        B  = self.a0_sim*np.array([[1,0],[0,-1]])
         A = np.eye(2)
         # Weight matrices for state and input
         Q = np.array([[1,0],[0,1]])
@@ -119,7 +119,7 @@ class algorithm:
 
     def correct_position(self, robot_list):
         microrobot_latest_position_x = robot_list[-1].position_list[-1][0]
-        microrobot_latest_position_y = robot_list[-1].position_list[-1][1]
+        microrobot_latest_position_y = 2048 - robot_list[-1].position_list[-1][1] 
         y_max = 2048
         y = y_max - microrobot_latest_position_y
         out = np.array([microrobot_latest_position_x, y])
@@ -385,7 +385,7 @@ class algorithm:
 
         self.counter += 1
 
-        cv2.circle(frame,(self.goal[0], self.goal[1]),20,(0,0,0), -1)
+        #cv2.circle(frame,(self.goal[0], self.goal[1]),20,(0,0,0), -1)
 
 
         #determines what type of path were following from trajecotry list
@@ -415,10 +415,12 @@ class algorithm:
         
         #define robot position
         microrobot_latest_position_x = robot_list[-1].position_list[-1][0]
-        microrobot_latest_position_y = robot_list[-1].position_list[-1][1]
+        microrobot_latest_position_y = robot_list[-1].position_list[-1][1] 
         microrobot_latest_position = np.array([microrobot_latest_position_x, 
                                                microrobot_latest_position_y]).reshape(2)
-        
+        vx = robot_list[-1].velocity_list[-1][0]
+        vy = robot_list[-1].velocity_list[-1][1]
+        print("velocity",(vx,vy))
         #print(microrobot_latest_position)
         #print("X0", microrobot_latest_position)
         # u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, (v_e)*self.dt)
@@ -437,8 +439,11 @@ class algorithm:
                 v_e = np.array([muX[0], muY[0]])
             except Exception:
                 v_e = np.array([0,0])
-            # v_e = np.array([0,0])
-            u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, v_e)
+           
+            
+            u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, 0)
+            
+            #u_mpc = np.array([0,1])
             path = current_ref
             print('u_mpc = ', u_mpc)
             self.f_t, self.alpha_t = self.mpc.convert_control(u_mpc)
