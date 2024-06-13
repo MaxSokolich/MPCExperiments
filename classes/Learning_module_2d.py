@@ -108,9 +108,9 @@ class LearningModule:
         # To read a specific sheet by name
         data = np.array(data)
         freq_read = data[:,-1]
-        alpha_read = np.pi/2-data[:,-2]
+        alpha_read = np.pi/2+data[:,-2]
         vx_read = data[:,3]
-        vy_read = -data[:,4]
+        vy_read = data[:,4]
         freq_ls = np.unique(freq_read)
         alpha_ls = np.unique(alpha_read)
 
