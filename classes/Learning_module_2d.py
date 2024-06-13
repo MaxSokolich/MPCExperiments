@@ -187,8 +187,8 @@ class LearningModule:
 
 
 
-        print("a0_y:", model_y.coef_)
-        print("D_y:", model_y.intercept_)
+        print("a0_y:", -model_y.coef_)
+        print("D_y:", -model_y.intercept_)
 
        
 
@@ -240,7 +240,8 @@ class LearningModule:
             plt.title('Linear Regression y Axis')
             plt.legend()
             plt.show()
-        a0 =0.5*model_x.coef_[0][0]+0.5*model_y.coef_[0][0]
+        a0 =0.5*model_x.coef_[0][0]-0.5*model_y.coef_[0][0]
+        print('a0=================', a0)
 
 
         ####Visualize the error
@@ -355,8 +356,8 @@ class LearningModule:
         X = np.vstack( [alpha, freq] ).transpose()
                 
         #v_e = v_actual - v_desired = v - a0*f*[ cos alpha; sin alpha]
-        Yx = vx - self.a0 * freq * np.sin(alpha)
-        Yy = vy - self.a0 * freq * np.cos(alpha)
+        Yx = vx - self.a0 * freq * np.cos(alpha)
+        Yy = vy + self.a0 * freq * np.sin(alpha)
 
         self.gprX.fit(X, Yx)
         self.gprY.fit(X, Yy)
