@@ -8,6 +8,3 @@ cycles_gen_data = 3
 # df.to_excel("data.xlsx", index=False)
 GP = LearningModule(cycles_gen_data)
 GP.read_data_action(data)
-GP.estimate_a0()
-
-
