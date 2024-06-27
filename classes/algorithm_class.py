@@ -61,7 +61,7 @@ class algorithm:
         gpath_planner_traj = self.generate_in_between_points(node_ls)
         width = 800
         height = 800
-        center = (1000, 1000)
+        center = [1000, 1000]
         self.ref = self.generate_infinity_path(width, height, center)
         # ref = np.load('classes')
 
@@ -138,7 +138,7 @@ class algorithm:
         np.array: Array of points (x, y) that form the infinity path.
         """
         # Unpack the center coordinates
-        cx, cy = center
+        cx, cy = center[0], center[1]
         
         # Generate t values from 0 to 2*pi
         t = np.linspace(0, 2 * np.pi, num_points)
