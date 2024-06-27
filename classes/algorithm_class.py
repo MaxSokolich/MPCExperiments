@@ -1,6 +1,11 @@
 
 import numpy as np
 import sys
+import os
+
+# Add the directory containing the 'classes' folder to the Python path
+
+
 from classes.Learning_module_2d import LearningModule # type: ignore
 from classes.MR_simulator import Simulator
 import math 
@@ -54,7 +59,10 @@ class algorithm:
         # node_ls[3] = np.array([1500, 1600])
         # node_ls = np.delete(node_ls, 1, 0)
         gpath_planner_traj = self.generate_in_between_points(node_ls)
-        self.ref = gpath_planner_traj
+        width = 800
+        height = 800
+        center = (1000, 1000)
+        self.ref = self.generate_infinity_path(width, height, center)
         # ref = np.load('classes')
 
 
@@ -115,6 +123,31 @@ class algorithm:
     def load_GP(self):
         
         self.gp.load_GP()
+
+    def generate_infinity_path(width, height, center, num_points=1000):
+        """
+        Generate points for an infinity-shaped path.
+
+        Args:
+        width (float): The width of the infinity path.
+        height (float): The height of the infinity path.
+        center (tuple): The (x, y) center of the infinity path.
+        num_points (int): Number of points to generate.
+
+        Returns:
+        np.array: Array of points (x, y) that form the infinity path.
+        """
+        # Unpack the center coordinates
+        cx, cy = center
+        
+        # Generate t values from 0 to 2*pi
+        t = np.linspace(0, 2 * np.pi, num_points)
+        
+        # Parametric equations for the lemniscate
+        x = cx + (width / 2) * np.sin(t) / (1 + np.cos(t)**2)
+        y = cy + (height / 2) * np.sin(t) * np.cos(t) / (1 + np.cos(t)**2)
+        
+        return np.column_stack((x, y))
         
 
     def correct_position(self, robot_list):
@@ -349,7 +382,7 @@ class algorithm:
         for i in range(len(node_ls)-1):
             start_point, end_point = node_ls[i], node_ls[i+1]
             length = np.linalg.norm(end_point-start_point)
-            num_points_per_segment= int(1*length/5)
+            num_points_per_segment= int(2*length/5)
             # Generate a sequence of numbers between 0 and 1, which will serve as interpolation factors.
             interpolation_factors = np.linspace(0, 1, num_points_per_segment + 2)
             
@@ -440,7 +473,7 @@ class algorithm:
             except Exception:
                 v_e = np.array([0,0])
            
-            print("v_e", v_e)
+            
             u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, 0)
             
             #u_mpc = np.array([0,1])
