@@ -349,7 +349,7 @@ class algorithm:
         for i in range(len(node_ls)-1):
             start_point, end_point = node_ls[i], node_ls[i+1]
             length = np.linalg.norm(end_point-start_point)
-            num_points_per_segment= int(2*length/5)
+            num_points_per_segment= int(1*length/5)
             # Generate a sequence of numbers between 0 and 1, which will serve as interpolation factors.
             interpolation_factors = np.linspace(0, 1, num_points_per_segment + 2)
             
@@ -440,7 +440,7 @@ class algorithm:
             except Exception:
                 v_e = np.array([0,0])
            
-            
+            print("v_e", v_e)
             u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, 0)
             
             #u_mpc = np.array([0,1])

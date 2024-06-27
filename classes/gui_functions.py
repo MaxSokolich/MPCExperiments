@@ -73,7 +73,7 @@ class MainWindow(QtWidgets.QMainWindow):
     
       
 
-        self.new_dir_path = "Tracking Data"
+        self.new_dir_path = r"D:\mpc\videos"
         if not os.path.exists(self.new_dir_path):
             os.makedirs(self.new_dir_path)
 
