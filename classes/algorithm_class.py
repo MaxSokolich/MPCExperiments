@@ -125,7 +125,7 @@ class algorithm:
         
         self.gp.load_GP()
 
-    def generate_infinity_path(self, width, height, center, num_points=900):
+    def generate_infinity_path(self, width, height, center, num_points=1100):
         """
         Generate points for an infinity-shaped path.
 
@@ -475,8 +475,8 @@ class algorithm:
             except Exception:
                 v_e = np.array([0,0])
            
-            #v_e = np.array([muX[0], muY[0]])
-            v_e = np.array([0,0])
+            v_e = np.array([muX[0], muY[0]])
+            #v_e = np.array([0,0])
             u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, v_e)
             
             #u_mpc = np.array([0,1])
