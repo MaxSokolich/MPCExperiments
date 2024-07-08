@@ -74,7 +74,8 @@ class MPC:
         # Decision variables for states and inputs
         x = m.addMVar((self.N+1, self.nx), lb=-GRB.INFINITY, name="x")
         u = m.addMVar((self.N, self.nu), lb= self.umin, ub=self.umax, name="u")
-        
+        m.addConstr(u<= self.umax)
+        m.addConstr(u>=self.umin)
         # Initial state constraint
         m.addConstr(x[0, :] == x0, name="init")
     
