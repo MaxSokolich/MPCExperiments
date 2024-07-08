@@ -63,7 +63,7 @@ class VideoThread(QThread):
         self.crop_length_record = 200
         
         self.exposure = 5000
-        self.objective = 4
+        self.objective = 10
 
 
         self.arrivalthresh = 100

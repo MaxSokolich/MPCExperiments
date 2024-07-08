@@ -59,10 +59,11 @@ class algorithm:
         # node_ls[3] = np.array([1500, 1600])
         # node_ls = np.delete(node_ls, 1, 0)
         gpath_planner_traj = self.generate_in_between_points(node_ls)
-        width = 800
-        height = 800
-        center = [1000, 1000]
+        width = 1600
+        height = 2000
+        center = [1200, 1000]
         self.ref = self.generate_infinity_path(width, height, center)
+        print(self.ref)
         # ref = np.load('classes')
 
 
@@ -124,7 +125,7 @@ class algorithm:
         
         self.gp.load_GP()
 
-    def generate_infinity_path(width, height, center, num_points=1000):
+    def generate_infinity_path(self, width, height, center, num_points=900):
         """
         Generate points for an infinity-shaped path.
 
@@ -138,6 +139,7 @@ class algorithm:
         np.array: Array of points (x, y) that form the infinity path.
         """
         # Unpack the center coordinates
+        print(center)
         cx, cy = center[0], center[1]
         
         # Generate t values from 0 to 2*pi
@@ -473,8 +475,9 @@ class algorithm:
             except Exception:
                 v_e = np.array([0,0])
            
-            
-            u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, 0)
+            #v_e = np.array([muX[0], muY[0]])
+            v_e = np.array([0,0])
+            u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, v_e)
             
             #u_mpc = np.array([0,1])
             path = current_ref

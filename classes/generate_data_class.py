@@ -69,7 +69,7 @@ class gen_data:
         
         #print(curernt_pos)
 
-        direction_vec = [1900 - curernt_pos[0], 1600 - curernt_pos[1]]
+        direction_vec = [1300 - curernt_pos[0], 1000 - curernt_pos[1]]
         error = np.sqrt(direction_vec[0] ** 2 + direction_vec[1] ** 2)
         start_alpha = np.arctan2(-direction_vec[1], direction_vec[0]) - np.pi/2
         

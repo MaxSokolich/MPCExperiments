@@ -764,10 +764,10 @@ class MainWindow(QtWidgets.QMainWindow):
         
     def resetparams(self):
         self.ui.robotmasklowerbox.setValue(0)
-        self.ui.robotmaskupperbox.setValue(128)
-        self.ui.robotmaskdilationbox.setValue(0)
-        self.ui.robotmaskblurbox.setValue(0)
-        self.ui.robotcroplengthbox.setValue(40)
+        self.ui.robotmaskupperbox.setValue(123)
+        self.ui.robotmaskdilationbox.setValue(3)
+        self.ui.robotmaskblurbox.setValue(6)
+        self.ui.robotcroplengthbox.setValue(90)
         self.ui.objectivebox.setValue(10)
         self.ui.exposurebox.setValue(5000)
 
