@@ -225,7 +225,7 @@ class MainWindow(QtWidgets.QMainWindow):
             print("this will only print once")
             dataset2 =  np.load('datasetGP2.npy')
             self.GP.read_data_action(dataset2, self.tracker.objective)
-       
+            print('reached here 1')
             self.GP.estimate_a0(1)
         else:
 
