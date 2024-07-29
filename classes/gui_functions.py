@@ -292,7 +292,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif self.generate_data_status2 == True and self.generate_data2.run_calibration_status == False:
             if len(robot_list) > 0:
             
-                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data2.run_infinity()
+                frame, Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data2.run_infinity(robot_list, frame)
                 self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
                 
 

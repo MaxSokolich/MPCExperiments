@@ -618,3 +618,131 @@ class algorithm:
         # 
         
         return frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq
+    
+
+
+
+    def generate_data(self, robot_list, frame): #this executes at every frame
+
+        self.counter += 1
+
+
+        if len(robot_list[-1].trajectory) > 0:
+            ref = robot_list[-1].trajectory
+            ref = np.reshape(np.array(ref), [len(ref),2])
+            self.ref = ref
+
+        microrobot_latest_position_x = robot_list[-1].position_list[-1][0]
+        microrobot_latest_position_y = robot_list[-1].position_list[-1][1] 
+        microrobot_latest_position = np.array([microrobot_latest_position_x, 
+                                               microrobot_latest_position_y]).reshape(2)
+        vx = robot_list[-1].velocity_list[-1][0]
+        vy = robot_list[-1].velocity_list[-1][1]
+        print("velocity",(vx,vy))
+
+
+
+        x_current = np.array([microrobot_latest_position_x, microrobot_latest_position_y])
+        closest_index = self.find_closest_index(x_current, self.ref)
+        
+        # current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
+        current_ref = self.ref[self.counter:min(closest_index+self.N, self.time_range), :]
+        if current_ref.shape[0] < self.N:
+            # Pad the reference if it's shorter than the prediction horizon
+            current_ref = np.vstack((current_ref, np.ones((self.N-current_ref.shape[0], 1)) * self.ref[-1, :]))
+
+        goal_trsh = 10
+        if np.linalg.norm(microrobot_latest_position-self.ref)<goal_trsh:
+            print('reached to the goal')
+            self.f_t, self.alpha_t = 0,0
+            path = []
+        else:
+            alpha_GP = -np.pi/2-self.alpha_ls[-1]
+            freq_GP = self.freq_ls [-1]
+            muX,sigX = self.gp.gprX.predict(np.array([[alpha_GP, freq_GP]]), return_std=True)
+            muY,sigY = self.gp.gprY.predict(np.array([[alpha_GP, freq_GP]]), return_std=True)
+            # D = np.array([gp_sim.Dx, gp_sim.Dy])
+            try:
+                v_e = np.array([muX[0], muY[0]])
+            except Exception:
+                v_e = np.array([0,0])
+           
+     
+            v_e = np.array([0,0])
+            u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, v_e)
+            
+            #u_mpc = np.array([0,1])
+            path = current_ref
+            print('u_mpc = ', u_mpc)
+            self.f_t, self.alpha_t = self.mpc.convert_control(u_mpc)
+            self.freq_ls.append(self.f_t)
+            self.alpha_ls.append(self.alpha_t)
+            
+
+        
+        
+        print('current_ref =', current_ref)
+
+        cv2.putText(frame, "counter: {}".format(self.counter),
+                        (int(2448 * (6/10)),
+                        int(2048 * (9.9/10))),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        fontScale=1, 
+                        thickness=4,
+                        color = (255, 255, 255))
+        # print('self_N = ', self.N)
+        goal = self.goal#np.array([1500,1500])
+    
+        self.umpc_history.append(u_mpc)
+
+        #plot direction vec
+        color = (255, 255, 255)  # Blue color in BGR
+        thickness = 10
+        line_type = 4
+        shift = 0
+        start_point = microrobot_latest_position
+        sc = 10
+        end_point = start_point.reshape(2) + sc*u_mpc.reshape(2)
+     
+        
+        #plot ref
+        ref_pts = np.array(self.ref, np.int32)
+        cv2.polylines(frame, [ref_pts], False, (100, 100, 100), 4)
+ 
+        #u vec
+        cv2.arrowedLine(frame, start_point.astype(np.int32), end_point.astype(np.int32), color, thickness, line_type, shift)
+        
+        #plot path
+        path_pts = np.array(path, np.int32)
+        cv2.polylines(frame, [path_pts], False, (0, 255, 0), 8)
+
+
+        
+
+        #plot pred traj pts pts
+        pred_traj_pts = np.array(pred_traj, np.int32)
+        cv2.polylines(frame, [pred_traj_pts], False, (0, 0, 255), 6)
+
+        rotatingfield = "alpha: {:.2f}, freq: {:.2f}".format(np.degrees(self.alpha_t),  self.f_t) #adding 90 to alpha for display purposes only
+                
+        cv2.putText(frame, rotatingfield,
+            (int(2448 / 1.8),int(2048 / 20)),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            fontScale=1.5, 
+            thickness=3,
+            color = (255, 255, 255),
+        )
+
+
+        Bx = 0
+        By = 0 
+        Bz = 0
+        alpha = self.alpha_t
+        gamma = np.pi/2
+        freq = self.f_t
+        psi = np.pi/2
+        gradient = 0 # gradient has to be 1 for the gradient thing to work
+        acoustic_freq = 0
+        
+        
+        return frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq
