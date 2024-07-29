@@ -413,7 +413,13 @@ class algorithm:
         return path
 
     
-    
+    def find_closest_index(self,current_state, reference_trajectory):
+        # Calculate the Euclidean distance between the current state and each point in the reference trajectory
+        distances = np.linalg.norm(reference_trajectory - current_state, axis=1)
+        # Find the index of the minimum distance
+        closest_index = np.argmin(distances)
+        return closest_index
+
 
 
     def run(self, robot_list, frame): #this executes at every frame
@@ -429,12 +435,6 @@ class algorithm:
             ref = np.reshape(np.array(ref), [len(ref),2])
             self.ref = ref
         
-
-        current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
-
-        if current_ref.shape[0] < self.N:
-            # Pad the reference if it's shorter than the prediction horizon
-            current_ref = np.vstack((current_ref, np.ones((self.N-current_ref.shape[0], 1)) * self.ref[-1, :]))
 
         ### Disturbance Compensator 
         # muX,sigX = self.gp_sim.gprX.predict(np.array([[self.alpha_t, self.freq_t]]), return_std=True)
@@ -456,6 +456,18 @@ class algorithm:
         vx = robot_list[-1].velocity_list[-1][0]
         vy = robot_list[-1].velocity_list[-1][1]
         print("velocity",(vx,vy))
+
+
+
+        x_current = np.array([microrobot_latest_position_x, microrobot_latest_position_y])
+        closest_index = self.find_closest_index(x_current, self.ref)
+        
+        # current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
+        current_ref = self.ref[self.counter:min(closest_index+self.N, self.time_range), :]
+        if current_ref.shape[0] < self.N:
+            # Pad the reference if it's shorter than the prediction horizon
+            current_ref = np.vstack((current_ref, np.ones((self.N-current_ref.shape[0], 1)) * self.ref[-1, :]))
+
         #print(microrobot_latest_position)
         #print("X0", microrobot_latest_position)
         # u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, (v_e)*self.dt)
