@@ -483,7 +483,7 @@ class algorithm:
                 v_e = np.array([muX[0], muY[0]])
             except Exception:
                 v_e = np.array([0,0])
-           
+            print(v_e)
             #v_e = np.array([muX[0], muY[0]])
             #v_e = np.array([0,0])
             u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, v_e)

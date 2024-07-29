@@ -93,7 +93,7 @@ class MPC:
 
         # Objective: Minimize cost function
         cost = 0
-        gamma = 1
+        gamma = 0.9
         for t in range(self.N):
             cost += gamma**t*(x[t, :] - ref[t, :]) @ self.Q @ (x[t, :] - ref[t, :]) + u[t, :] @ self.R @ u[t, :]
         

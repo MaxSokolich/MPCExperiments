@@ -231,6 +231,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
             print('reached here 1')
             self.GP.estimate_a0(1)
+           
         else:
 
             self.train_status2 = False
