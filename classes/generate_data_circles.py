@@ -63,7 +63,15 @@ class gen_data:
         self.actions_learn = actions_learn
         print('action data size = ',len(self.actions_learn))
 
-    def run_calibration(self, robot_list):
+
+    def run_calibration_infinity(self, robot_list):
+        pass
+
+    def run_infinity(self):
+        pass
+
+
+    def run_calibration_circles(self, robot_list):
         
         curernt_pos = robot_list[-1].position_list[-1] #the most recent position at the time of clicking run algo
         
@@ -101,7 +109,7 @@ class gen_data:
 
         return Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq
 
-    def run(self): #this executes at every frame
+    def run_circles(self): #this executes at every frame
 
             
         if self.counter < len(self.actions_learn):

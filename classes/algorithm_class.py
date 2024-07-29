@@ -444,9 +444,6 @@ class algorithm:
         
         
         #microrobot_latest_position = x_traj[t, :]
-
-
-        
         
         #define robot position
         microrobot_latest_position_x = robot_list[-1].position_list[-1][0]

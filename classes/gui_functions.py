@@ -36,7 +36,8 @@ from classes.arduino_class import ArduinoHandler
 from classes.robot_class import Robot
 from classes.record_class import RecordThread
 from classes.algorithm_class import algorithm
-from classes.generate_data_class import gen_data
+from classes.generate_data_circles import gen_data
+from classes.generate_data_infinity import gen_data2
 from classes.Learning_module_2d import LearningModule
 
 
@@ -98,6 +99,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.algorithm = algorithm()
         self.cycles_gen_data = 3
         self.generate_data = gen_data(self.cycles_gen_data)
+        self.generate_data2 = gen_data2()
         self.calibration_coord = [self.algorithm.init_point_x, self.algorithm.init_point_y]
 
         self.GP = LearningModule(self.cycles_gen_data)
@@ -153,6 +155,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.calibrate_button.clicked.connect(self.go_to_start)
         self.ui.Trainbutton.clicked.connect(self.train_function)
         self.ui.reset_paths.toggled.connect(self.reset_path_function)
+        self.ui.gen_data2_button.clicked.connect(self.generate_data2_function)
+        self.ui.train_data2_button.clicked.connect(self.train_function2)
 
 
         #readomg excel file variables        
@@ -163,7 +167,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.algorithm_status = False
         self.calibrate_status = False
         self.generate_data_status = False
+        self.generate_data_status2 = False
         self.train_status = False
+        self.train_status2 = False
 
 
     def reset_path_function(self):
@@ -171,7 +177,18 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tracker.robot_list[-1].trajectory.clear()
         
             
-        
+    
+    def generate_data_function(self):
+        if self.ui.generate_data_button.isChecked():
+            
+            self.generate_data_status = True
+            self.ui.generate_data_button.setText("Stop")
+        else:
+
+            self.generate_data_status = False
+            self.ui.generate_data_button.setText("Gen Data")
+            self.generate_data.reset(self.cycles_gen_data)
+
 
     def train_function(self):
         if self.ui.Trainbutton.isChecked():
@@ -188,6 +205,38 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.Trainbutton.setText("Train")
 
 
+    def generate_data2_function(self):
+        if self.ui.gen_data2_button.isChecked():
+            
+            self.generate_data_status2 = True
+            self.ui.gen_data2_button.setText("Stop")
+        else:
+
+            self.generate_data_status2 = False
+            self.ui.gen_data2_button.setText("Gen Data 2")
+            
+            self.generate_data2.reset()
+
+
+    def train_function2(self):
+        if self.ui.train_data2_button.isChecked():
+            self.train_status2 = True
+            self.ui.train_data2_button.setText("Stop")
+            print("this will only print once")
+            dataset2 =  np.load('datasetGP2.npy')
+            self.GP.read_data_action(dataset2, self.tracker.objective)
+       
+            self.GP.estimate_a0()
+        else:
+
+            self.train_status2 = False
+            self.ui.train_data2_button.setText("Train  2")
+
+    
+
+
+    
+
 
 
 
@@ -198,11 +247,11 @@ class MainWindow(QtWidgets.QMainWindow):
         freq = 0
         """Updates the image_label with a new opencv image"""
         
-        #step 1
+        #step 1: generate data 1(circles)
         if self.generate_data_status == True and self.generate_data.run_calibration_status == True: 
             
             if len(robot_list) > 0:
-                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run_calibration(robot_list)
+                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run_calibration_circles(robot_list)
 
                 self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
             
@@ -211,7 +260,7 @@ class MainWindow(QtWidgets.QMainWindow):
         elif self.generate_data_status == True and self.generate_data.run_calibration_status == False:
             if len(robot_list) > 0:
             
-                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run()
+                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data.run_circles()
                 self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
                 if self.generate_data.reading_actions == True:
                     #in here save data
@@ -229,6 +278,44 @@ class MainWindow(QtWidgets.QMainWindow):
                 if self.generate_data.reading_completed :
                     print('data size =', len(self.generate_data.dataset_GP))
                     np.save('datasetGP.npy', np.array(self.generate_data.dataset_GP))
+
+        #step 3: generate data 2 (infinity)
+        elif self.generate_data_status2 == True and self.generate_data2.run_calibration_status == True: 
+            
+            if len(robot_list) > 0:
+                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data2.run_calibration_infinity(robot_list)
+
+                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
+            
+        
+
+        elif self.generate_data_status2 == True and self.generate_data2.run_calibration_status == False:
+            if len(robot_list) > 0:
+            
+                Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq = self.generate_data2.run_infinity()
+                self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
+                
+
+                #frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list, frame)
+                #self.arduino.send(Bx,By,Bz,alpha,gamma,freq,psi,gradient,acoustic_freq)
+
+
+                if self.generate_data2.reading_actions == True:
+                    #in here save data
+                    time = robot_list[-1].times[-1]
+                    px = robot_list[-1].position_list[-1][0]
+                    py = robot_list[-1].position_list[-1][1]
+                    vx = robot_list[-1].velocity_list[-1][0]
+                    vy = robot_list[-1].velocity_list[-1][1]
+                    alpha = alpha
+                    freq = freq
+
+                    #save current state to dataset
+                    self.generate_data2.dataset_GP2.append([time, px,py,vx,vy, alpha, freq])
+                
+                if self.generate_data2.reading_completed:
+                    print('data size2 =', len(self.generate_data2.dataset_GP2))
+                    np.save('datasetGP2.npy', np.array(self.generate_data2.dataset_GP2))
                     
 
 
@@ -359,16 +446,7 @@ class MainWindow(QtWidgets.QMainWindow):
         
 
 
-    def generate_data_function(self):
-        if self.ui.generate_data_button.isChecked():
-            
-            self.generate_data_status = True
-            self.ui.generate_data_button.setText("Stop")
-        else:
-
-            self.generate_data_status = False
-            self.ui.generate_data_button.setText("Generate Data")
-            self.generate_data.reset(self.cycles_gen_data)
+    
       
 
 

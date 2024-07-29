@@ -138,7 +138,7 @@
        <x>10</x>
        <y>0</y>
        <width>311</width>
-       <height>231</height>
+       <height>281</height>
       </rect>
      </property>
      <property name="styleSheet">
@@ -239,7 +239,7 @@ QPushButton {
        </size>
       </property>
       <property name="text">
-       <string>step 3:</string>
+       <string>step 5:</string>
       </property>
      </widget>
      <widget class="QPushButton" name="run_algo">
@@ -247,7 +247,7 @@ QPushButton {
        <rect>
         <x>60</x>
         <y>160</y>
-        <width>131</width>
+        <width>91</width>
         <height>31</height>
        </rect>
       </property>
@@ -299,7 +299,7 @@ QPushButton {
        <rect>
         <x>60</x>
         <y>40</y>
-        <width>131</width>
+        <width>91</width>
         <height>31</height>
        </rect>
       </property>
@@ -340,7 +340,7 @@ QPushButton {
             }</string>
       </property>
       <property name="text">
-       <string>Generate Data</string>
+       <string>Gen Data</string>
       </property>
       <property name="checkable">
        <bool>true</bool>
@@ -351,7 +351,7 @@ QPushButton {
        <rect>
         <x>60</x>
         <y>120</y>
-        <width>131</width>
+        <width>91</width>
         <height>31</height>
        </rect>
       </property>
@@ -420,10 +420,10 @@ QPushButton {
      <widget class="QPushButton" name="recordbutton">
       <property name="geometry">
        <rect>
-        <x>210</x>
-        <y>60</y>
-        <width>81</width>
-        <height>71</height>
+        <x>0</x>
+        <y>220</y>
+        <width>121</width>
+        <height>31</height>
        </rect>
       </property>
       <property name="styleSheet">
@@ -458,8 +458,7 @@ QPushButton {
             }</string>
       </property>
       <property name="text">
-       <string>Record 
-Video</string>
+       <string>Record Video</string>
       </property>
       <property name="checkable">
        <bool>true</bool>
@@ -468,8 +467,8 @@ Video</string>
      <widget class="QCheckBox" name="RRTcheckbox">
       <property name="geometry">
        <rect>
-        <x>110</x>
-        <y>200</y>
+        <x>120</x>
+        <y>260</y>
         <width>61</width>
         <height>21</height>
        </rect>
@@ -484,8 +483,8 @@ Video</string>
      <widget class="QCheckBox" name="drawingcheckbox">
       <property name="geometry">
        <rect>
-        <x>20</x>
-        <y>200</y>
+        <x>30</x>
+        <y>260</y>
         <width>61</width>
         <height>21</height>
        </rect>
@@ -500,8 +499,8 @@ Video</string>
      <widget class="QCheckBox" name="RRTstarcheckbox">
       <property name="geometry">
        <rect>
-        <x>190</x>
-        <y>200</y>
+        <x>200</x>
+        <y>260</y>
         <width>61</width>
         <height>21</height>
        </rect>
@@ -518,7 +517,7 @@ Video</string>
        <rect>
         <x>60</x>
         <y>80</y>
-        <width>131</width>
+        <width>91</width>
         <height>31</height>
        </rect>
       </property>
@@ -581,15 +580,15 @@ QPushButton {
        </size>
       </property>
       <property name="text">
-       <string>step 4:</string>
+       <string>step 6:</string>
       </property>
      </widget>
      <widget class="QPushButton" name="reset_paths">
       <property name="geometry">
        <rect>
-        <x>210</x>
-        <y>160</y>
-        <width>81</width>
+        <x>130</x>
+        <y>220</y>
+        <width>111</width>
         <height>31</height>
        </rect>
       </property>
@@ -621,14 +620,156 @@ QPushButton {
        <bool>true</bool>
       </property>
      </widget>
+     <widget class="QPushButton" name="gen_data2_button">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>40</y>
+        <width>91</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="cursor">
+       <cursorShape>ArrowCursor</cursorShape>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">
+QPushButton {
+                color: rgb(255, 255, 255);
+                background-color: rgb(0, 0, 255);
+                border-style: outset;
+                border-width: 3px;
+                border-radius: 10px;
+                border-color: rgb(0, 0, 255);
+                min-width: 1em;
+                padding: 6px;
+			  font: bold 15px;
+            }
+      
+            QPushButton:checked {
+                color: rgb(255, 255, 255);
+                background-color: rgb(255, 0, 0);
+                border-style: inset;
+                border-width: 3px;
+                border-radius: 10px;
+                border-color: rgb(255, 0, 0);
+                font: bold 25px;
+                min-width: 1em;
+               
+            }
+            QPushButton:hover {
+                background-color: rgb(100, 100, 100);
+                color: rgb(255, 255, 255);
+                border-color: rgb(0, 255, 0);
+                padding-left: 5px;
+                padding-top: 5px;
+            }</string>
+      </property>
+      <property name="text">
+       <string>Gen Data 2</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="framelabel_6">
+      <property name="geometry">
+       <rect>
+        <x>160</x>
+        <y>40</y>
+        <width>51</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>300</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>step 3:</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="train_data2_button">
+      <property name="geometry">
+       <rect>
+        <x>210</x>
+        <y>80</y>
+        <width>91</width>
+        <height>31</height>
+       </rect>
+      </property>
+      <property name="cursor">
+       <cursorShape>ArrowCursor</cursorShape>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">
+QPushButton {
+                color: rgb(255, 255, 255);
+                background-color: rgb(0, 0, 255);
+                border-style: outset;
+                border-width: 3px;
+                border-radius: 10px;
+                border-color: rgb(0, 0, 255);
+                min-width: 1em;
+                padding: 6px;
+			  font: bold 15px;
+            }
+      
+            QPushButton:checked {
+                color: rgb(255, 255, 255);
+                background-color: rgb(255, 0, 0);
+                border-style: inset;
+                border-width: 3px;
+                border-radius: 10px;
+                border-color: rgb(255, 0, 0);
+                font: bold 25px;
+                min-width: 1em;
+               
+            }
+            QPushButton:hover {
+                background-color: rgb(100, 100, 100);
+                color: rgb(255, 255, 255);
+                border-color: rgb(0, 255, 0);
+                padding-left: 5px;
+                padding-top: 5px;
+            }</string>
+      </property>
+      <property name="text">
+       <string>Train 2</string>
+      </property>
+      <property name="checkable">
+       <bool>true</bool>
+      </property>
+     </widget>
+     <widget class="QLabel" name="framelabel_7">
+      <property name="geometry">
+       <rect>
+        <x>160</x>
+        <y>80</y>
+        <width>51</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>300</width>
+        <height>25</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>step 4:</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QFrame" name="robotparamsframe">
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>549</y>
+       <y>589</y>
        <width>311</width>
-       <height>61</height>
+       <height>21</height>
       </rect>
      </property>
      <property name="styleSheet">
@@ -992,7 +1133,7 @@ color: rgb(0,255,0);</string>
      </property>
      <property name="minimumSize">
       <size>
-       <width>21</width>
+       <width>25</width>
        <height>0</height>
       </size>
      </property>
@@ -1038,7 +1179,7 @@ color: rgb(0,255,0);</string>
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>240</y>
+       <y>280</y>
        <width>311</width>
        <height>301</height>
       </rect>
@@ -1637,9 +1778,9 @@ color: rgb(0,255,0);</string>
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>10</y>
+        <y>30</y>
         <width>61</width>
-        <height>51</height>
+        <height>31</height>
        </rect>
       </property>
       <property name="styleSheet">
