@@ -224,13 +224,15 @@ class MainWindow(QtWidgets.QMainWindow):
             self.ui.train_data2_button.setText("Stop")
             print("this will only print once")
             dataset2 =  np.load('datasetGP2.npy')
-            self.GP.read_data_action(dataset2, self.tracker.objective)
+            dataset1 =  np.load('datasetGP.npy')
+            self.GP.read_data_action(dataset1, self.tracker.objective)
+            self.GP.read_data_action2(dataset2, self.tracker.objective)
        
             self.GP.estimate_a0(1)
         else:
 
             self.train_status2 = False
-            self.ui.train_data2_button.setText("Train  2")
+            self.ui.train_data2_button.setText("Train 2")
 
     
 
