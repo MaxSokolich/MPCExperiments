@@ -139,29 +139,85 @@ class LearningModule:
         alpha_grid, freq_grid  = np.meshgrid(alpha_ls, freq_ls)
         self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid = alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
         # return  alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
-    
-    def estimate_a0(self):
 
-        #### Estimate a0 and train GP
-        X = np.vstack( [self.alpha_grid.flatten(), self.freq_grid.flatten()] ).transpose()
-        Y = np.vstack([self.vx_grid.flatten(), self.vy_grid.flatten()]).transpose()
 
-        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.15, random_state=42)
-        # plt.scatter(self.freq_sim*np.cos(self.alpha_sim),self.vx_grid.flatten())
-        # plt.scatter(self.freq_sim*np.sin(self.alpha_sim),self.vy_grid.flatten())
-        # plt.show()
+
+
         
-        a0_est = self.linear_reg(self.alpha_grid.flatten(), self.freq_grid.flatten(), self.vx_grid.flatten(),self.vy_grid.flatten())
-        print('a0_est=',a0_est)
-        np.save('a0_est.npy', a0_est)
-       
- 
-        self.a0 = a0_est
-        self.learn(self.vx_grid.flatten(), self.vy_grid.flatten(), self.alpha_grid.flatten(), self.freq_grid.flatten())
-        # self.learn( Y_train[:,0], Y_train[:,1], X_train[:,0], X_train[:,1])
-        print('Trainig completed')
-        if self.plot:
-            self.visualize_mu(self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid)
+    def read_data_action2(self, data, obj):
+        # If you are not sure about the sheet names, you can list all sheet names like this
+        # cycle = 1
+        # sc_factor = 0.28985 * obj
+        sc_factor = 0.28985 * obj
+        # To read a specific sheet by name
+        data = np.array(data)
+        freq_read = data[:,-1]
+        alpha_read = np.pi/2+data[:,-2]
+        vx_read = data[:,3]
+        vy_read = data[:,4]
+        # freq_ls = np.unique(freq_read)
+        # alpha_ls = np.unique(alpha_read)
+  
+    
+        self.alpha_infinity, self.freq_infinity ,self.vx_infinity, self.vy_infinity = alpha_read, freq_read ,vx_read, vy_read
+        self.alpha_all, self.freq_all = np.hstack([self.alpha_grid.flatten(), self.alpha_infinity.flatten()]), np.hstack([self.freq_grid.flatten(), self.freq_infinity.flatten()])
+        self.vx_all, self.vy_all = np.hstack([self.vx_grid.flatten(), self.vx_infinity.flatten()]), np.hstack([self.vy_grid.flatten(), self.vy_infinity.flatten()])
+        # return  alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
+
+
+
+    
+    
+
+
+
+
+    
+    def estimate_a0(self, mod):
+        if mod == 0:
+        #### Estimate a0 and train GP
+            X = np.vstack( [self.alpha_grid.flatten(), self.freq_grid.flatten()] ).transpose()
+            Y = np.vstack([self.vx_grid.flatten(), self.vy_grid.flatten()]).transpose()
+
+            X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.15, random_state=42)
+            # plt.scatter(self.freq_sim*np.cos(self.alpha_sim),self.vx_grid.flatten())
+            # plt.scatter(self.freq_sim*np.sin(self.alpha_sim),self.vy_grid.flatten())
+            # plt.show()
+            
+            a0_est = self.linear_reg(self.alpha_grid.flatten(), self.freq_grid.flatten(), self.vx_grid.flatten(),self.vy_grid.flatten())
+            print('a0_est=',a0_est)
+            np.save('a0_est.npy', a0_est)
+        
+    
+            self.a0 = a0_est
+            self.learn(self.vx_grid.flatten(), self.vy_grid.flatten(), self.alpha_grid.flatten(), self.freq_grid.flatten())
+            # self.learn( Y_train[:,0], Y_train[:,1], X_train[:,0], X_train[:,1])
+            print('Trainig completed')
+            if self.plot:
+                self.visualize_mu(self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid)
+
+
+            if mod == 1:
+            #### Estimate a0 and train GP
+                X = np.vstack( [self.alpha_all.flatten(), self.freq_all.flatten()] ).transpose()
+                Y = np.vstack([self.vx_all.flatten(), self.vy_all.flatten()]).transpose()
+
+                X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.15, random_state=42)
+                # plt.scatter(self.freq_sim*np.cos(self.alpha_sim),self.vx_grid.flatten())
+                # plt.scatter(self.freq_sim*np.sin(self.alpha_sim),self.vy_grid.flatten())
+                # plt.show()
+                
+                a0_est = self.linear_reg(self.alpha_grid.flatten(), self.freq_grid.flatten(), self.vx_grid.flatten(),self.vy_grid.flatten())
+                print('a0_est=',a0_est)
+                np.save('a0_est.npy', a0_est)
+            
+        
+                self.a0 = a0_est
+                self.learn(self.vx_grid.flatten(), self.vy_grid.flatten(), self.alpha_grid.flatten(), self.freq_grid.flatten())
+                # self.learn( Y_train[:,0], Y_train[:,1], X_train[:,0], X_train[:,1])
+                print('Trainig completed')
+                if self.plot:
+                    self.visualize_mu(self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid)
 
         
 

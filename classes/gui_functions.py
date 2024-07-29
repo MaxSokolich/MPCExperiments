@@ -198,7 +198,7 @@ class MainWindow(QtWidgets.QMainWindow):
             dataset =  np.load('datasetGP.npy')
             self.GP.read_data_action(dataset, self.tracker.objective)
        
-            self.GP.estimate_a0()
+            self.GP.estimate_a0(0)
         else:
 
             self.train_status = False
@@ -226,7 +226,7 @@ class MainWindow(QtWidgets.QMainWindow):
             dataset2 =  np.load('datasetGP2.npy')
             self.GP.read_data_action(dataset2, self.tracker.objective)
        
-            self.GP.estimate_a0()
+            self.GP.estimate_a0(1)
         else:
 
             self.train_status2 = False
