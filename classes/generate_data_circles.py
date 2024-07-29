@@ -64,12 +64,6 @@ class gen_data:
         print('action data size = ',len(self.actions_learn))
 
 
-    def run_calibration_infinity(self, robot_list):
-        pass
-
-    def run_infinity(self):
-        pass
-
 
     def run_calibration_circles(self, robot_list):
         

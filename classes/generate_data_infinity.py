@@ -21,7 +21,7 @@ class gen_data2:
         
     def reset(self):
  
-        self.max_steps = 1000
+        self.max_steps = 1100
         
         ### freq range for gen data
         self.f_min = 0
@@ -48,16 +48,19 @@ class gen_data2:
     def run_infinity(self, robot_list, frame): #this executes at every frame
 
         
-        if self.algorithm.counter == self.max_steps:
-            self.reading_completed = True
-            print('reading_completed')
-
+        if self.algorithm.counter < self.max_steps:
+            self.reading_actions = True
+            frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.run(robot_list, frame)
+            if self.algorithm.counter == self.max_steps-1:
+                print("reading completed")
+                self.reading_completed = True
+                
+                
+        
         else:
             self.reading_completed = False
             self.reading_actions = False
-            frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = self.algorithm.generate_data(robot_list, frame)
-
-        
+            Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq = [0,0,0,0,0,0,0,0,0]
 
         return frame, Bx, By, Bz, alpha, gamma, freq, psi, gradient, acoustic_freq
     

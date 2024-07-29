@@ -312,7 +312,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
                     #save current state to dataset
                     self.generate_data2.dataset_GP2.append([time, px,py,vx,vy, alpha, freq])
-                
+                    
                 if self.generate_data2.reading_completed:
                     print('data size2 =', len(self.generate_data2.dataset_GP2))
                     np.save('datasetGP2.npy', np.array(self.generate_data2.dataset_GP2))
