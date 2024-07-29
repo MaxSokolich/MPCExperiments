@@ -228,6 +228,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.GP.read_data_action(dataset1, self.tracker.objective)
             self.GP.read_data_action2(dataset2, self.tracker.objective)
        
+
+            print('reached here 1')
             self.GP.estimate_a0(1)
         else:
 
