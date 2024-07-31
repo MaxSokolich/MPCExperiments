@@ -10,7 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.optimize import minimize, minimize_scalar
 
 from sklearn.model_selection import train_test_split
-
+import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -55,7 +55,7 @@ class LearningModule:
         self.f = 0
         self.Dx = 0
         self.Dy = 0
-        self.plot = False
+        self.plot = True
         self.cycle = cycle
 
     
@@ -108,7 +108,7 @@ class LearningModule:
         # To read a specific sheet by name
         data = np.array(data)
         freq_read = data[:,-1]
-        alpha_read = np.pi/2+data[:,-2]
+        alpha_read = data[:,-2]
         vx_read = data[:,3]
         vy_read = data[:,4]
         freq_ls = np.unique(freq_read)
@@ -137,12 +137,24 @@ class LearningModule:
 
         
         alpha_grid, freq_grid  = np.meshgrid(alpha_ls, freq_ls)
-        self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid = alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
+        self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid = np.pi/2+alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
         # return  alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
 
 
 
+     
+    def dyn_model(self, alpha, freq):
+      
 
+        #evaluate the GPs
+        X = np.array([[alpha, freq]])
+  
+        muX,sigX = self.gprX.predict(X, return_std=True)
+        muY,sigY = self.gprY.predict(X, return_std=True)
+
+        v_x = self.a0*freq*np.cos(alpha)+muX
+        v_y = -self.a0*freq*np.sin(alpha)+muY
+        return [v_x, v_y], [self.a0*freq*np.cos(alpha), -self.a0*freq*np.sin(alpha)],[sigX, sigY]
         
     def read_data_action2(self, data, obj):
         # If you are not sure about the sheet names, you can list all sheet names like this
@@ -162,8 +174,32 @@ class LearningModule:
         self.alpha_infinity, self.freq_infinity ,self.vx_infinity, self.vy_infinity = alpha_read, freq_read ,vx_read, vy_read
         self.alpha_all, self.freq_all = np.hstack([self.alpha_grid.flatten(), self.alpha_infinity.flatten()]), np.hstack([self.freq_grid.flatten(), self.freq_infinity.flatten()])
         self.vx_all, self.vy_all = np.hstack([self.vx_grid.flatten(), self.vx_infinity.flatten()]), np.hstack([self.vy_grid.flatten(), self.vy_infinity.flatten()])
-        # return  alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
-        print(self.vx_all.shape)
+        data = {
+            'alpha': self.alpha_all,
+            'freq': self.freq_all,
+            'vx': self.vx_all,
+            'vy': self.vy_all
+        }
+        df = pd.DataFrame(data)
+        # Define the bin sizes for alpha and freq
+        bin_size_alpha = np.pi/180
+        bin_size_freq = 0.5
+
+        # Create bins for alpha and freq based on bin sizes
+        alpha_bins = np.arange(df['alpha'].min(), df['alpha'].max() + bin_size_alpha, bin_size_alpha)
+        freq_bins = np.arange(df['freq'].min(), df['freq'].max() + bin_size_freq, bin_size_freq)
+
+        # Assign each point to a bin
+        df['alpha_bin'] = pd.cut(df['alpha'], bins=alpha_bins, labels=False)
+        df['freq_bin'] = pd.cut(df['freq'], bins=freq_bins, labels=False)
+
+        # Group by the bins and calculate the mean vx and vy
+        grouped = df.groupby(['alpha_bin', 'freq_bin']).agg({'vx': 'mean', 'vy': 'mean'}).reset_index()
+                # return  alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
+        print('all_dataset_shape=', self.vx_all.shape)
+        self.alpha_grouped, self.freq_grouped, self.vx_grouped, self.vy_grouped = np.array(grouped['alpha_bin']),  np.array(grouped['freq_bin']),  np.array(grouped['vx']),  np.array(grouped['vy'])
+        print('grouped_dataset_shape=', self.alpha_grouped.shape)
+
 
 
     
@@ -200,11 +236,15 @@ class LearningModule:
         if mod == 1:
             print('reacehd here 2')
         #### Estimate a0 and train GP
-            X = np.vstack( [self.alpha_all.flatten(), self.freq_all.flatten()] ).transpose()
-            Y = np.vstack([self.vx_all.flatten(), self.vy_all.flatten()]).transpose()
-            print('datasize===', len(self.vx_all.flatten()))
+            # X = np.vstack( [self.alpha_all.flatten(), self.freq_all.flatten()] ).transpose()
+            # Y = np.vstack([self.vx_all.flatten(), self.vy_all.flatten()]).transpose()
+            # print('datasize===', len(self.vx_all.flatten()))
 
-            X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.15, random_state=42)
+            # X = np.vstack( [self.alpha_grouped.flatten(), self.freq_grouped.flatten()] ).transpose()
+            # Y = np.vstack([self.vx_grouped.flatten(), self.vy_grouped.flatten()]).transpose()
+            # print('datasize===', len(self.vx_grouped.flatten()))
+
+            # X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.15, random_state=42)
             # plt.scatter(self.freq_sim*np.cos(self.alpha_sim),self.vx_grid.flatten())
             # plt.scatter(self.freq_sim*np.sin(self.alpha_sim),self.vy_grid.flatten())
             # plt.show()
@@ -214,7 +254,7 @@ class LearningModule:
             np.save('a0_est.npy', a0_est)
         
     
-            self.a0 = a0_est
+            # self.a0 = a0_est
             self.learn(self.vx_all.flatten(), self.vy_all.flatten(), self.alpha_all.flatten(), self.freq_all.flatten())
             # self.learn( Y_train[:,0], Y_train[:,1], X_train[:,0], X_train[:,1])
             print('Trainig completed')

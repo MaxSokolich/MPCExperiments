@@ -92,14 +92,24 @@ class MPC:
         #     m.addConstr(x[t, :] <= xmax, name=f"xmax_{t}")
 
         # Objective: Minimize cost function
-        cost = 0
+        abs_diff = m.addVars(self.N-1, name="abs_diff")
+
+        # Define the cost function
+        cost = gp.QuadExpr()
+
         gamma = 0.9
         for t in range(self.N):
             cost += gamma**t*(x[t, :] - ref[t, :]) @ self.Q @ (x[t, :] - ref[t, :]) + u[t, :] @ self.R @ u[t, :]
         
         # cost+=1000* (x[t, :] - ref[t, :]) @ Q @ (x[t, :] - ref[t, :])
-        # for t in range(N-1):
-        #     cost += (u[t, :]-u[t+1,:]) @ R @ (u[t, :]-u[t+1,:])
+        for t in range(self.N-1):
+            u_sq_diff = (u[t, 0]**2 + u[t, 1]**2) - (u[t+1, 0]**2 + u[t+1, 1]**2)
+            m.addConstr(abs_diff[t] >= u_sq_diff, name=f"abs_diff_pos_{t}")
+            m.addConstr(abs_diff[t] >= -u_sq_diff, name=f"abs_diff_neg_{t}")
+            cost += abs_diff[t]
+        # for t in range(self.N-1):
+        #     cost += (u[t, :]-u[t+1,:]) @ self.R @ (u[t, :]-u[t+1,:])
+           
    
         m.setObjective(cost, GRB.MINIMIZE)
 
