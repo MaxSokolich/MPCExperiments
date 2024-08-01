@@ -125,31 +125,31 @@ class algorithm:
         
         self.gp.load_GP()
 
-    def generate_infinity_path(self, width, height, center, num_points=1100):
-        """
-        Generate points for an infinity-shaped path.
+        def generate_infinity_path(self, width, height, center, num_points=1100):
+            """
+            Generate points for an infinity-shaped path.
 
-        Args:
-        width (float): The width of the infinity path.
-        height (float): The height of the infinity path.
-        center (tuple): The (x, y) center of the infinity path.
-        num_points (int): Number of points to generate.
+            Args:
+            width (float): The width of the infinity path.
+            height (float): The height of the infinity path.
+            center (tuple): The (x, y) center of the infinity path.
+            num_points (int): Number of points to generate.
 
-        Returns:
-        np.array: Array of points (x, y) that form the infinity path.
-        """
-        # Unpack the center coordinates
-        print(center)
-        cx, cy = center[0], center[1]
-        
-        # Generate t values from 0 to 2*pi
-        t = np.linspace(0, 2 * np.pi, num_points)
-        
-        # Parametric equations for the lemniscate
-        x = cx + (width / 2) * np.sin(t) / (1 + np.cos(t)**2)
-        y = cy + (height / 2) * np.sin(t) * np.cos(t) / (1 + np.cos(t)**2)
-        
-        return np.column_stack((x, y))
+            Returns:
+            np.array: Array of points (x, y) that form the infinity path.
+            """
+            # Unpack the center coordinates
+            print(center)
+            cx, cy = center[0], center[1]
+            
+            # Generate t values from 0 to 2*pi
+            t = np.linspace(0, 2 * np.pi, num_points)
+            
+            # Parametric equations for the lemniscate
+            x = cx + (width / 2) * np.sin(t) / (1 + np.cos(t)**2)
+            y = cy + (height / 2) * np.sin(t) * np.cos(t) / (1 + np.cos(t)**2)
+            
+            return np.column_stack((x, y))
         
 
     def correct_position(self, robot_list):

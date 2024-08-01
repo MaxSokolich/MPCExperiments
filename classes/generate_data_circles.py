@@ -23,7 +23,7 @@ class gen_data:
         self.counter = 0
         self.cycles = cycles#train my moving in 3 circles
         ### freq range for gen data
-        self.f_min = 0
+        self.f_min = 1
         self.f_max =5
    
         self.frange_size = self.f_max-self.f_min +1 
