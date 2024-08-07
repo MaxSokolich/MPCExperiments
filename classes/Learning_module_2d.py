@@ -61,7 +61,7 @@ class LearningModule:
         self.f = 0
         self.Dx = 0
         self.Dy = 0
-        self.plot = True
+        self.plot = False
         self.cycle = cycle
         
     def normalize_angle(self, angles):
@@ -361,9 +361,9 @@ class LearningModule:
             # plt.scatter(self.freq_sim*np.sin(self.alpha_sim),self.vy_grid.flatten())
             # plt.show()
             
-            self.a0_est = self.linear_reg(self.alpha_all.flatten(), self.freq_all.flatten(), self.vx_all.flatten(),self.vy_all.flatten())
-            print('a0_est=',a0_est)
-            np.save('a0_est.npy', a0_est)
+            self.a0 = self.linear_reg(self.alpha_all.flatten(), self.freq_all.flatten(), self.vx_all.flatten(),self.vy_all.flatten())
+            print('a0=',self.a0)
+            np.save('a0.npy', self.a0)
         
     
             # self.a0 = a0_est
@@ -383,7 +383,8 @@ class LearningModule:
             self.learn(self.vx_all.flatten()[indices], self.vy_all.flatten()[indices], self.alpha_all.flatten()[indices], self.freq_all.flatten()[indices])
         if mod == 3:
             # Select and return the elements at the generated indices
-            self.a0_est = self.linear_reg(self.alpha_grid.flatten(), self.freq_grid.flatten(), self.vx_grid.flatten(),self.vy_grid.flatten())
+            print("mod 3")
+            self.a0 = self.linear_reg(self.alpha_grid.flatten(), self.freq_grid.flatten(), self.vx_grid.flatten(),self.vy_grid.flatten())
             self.learn(self.vx_grouped.flatten(), self.vy_grouped.flatten(), self.alpha_grouped.flatten(), self.freq_grouped.flatten())
 
 

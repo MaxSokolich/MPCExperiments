@@ -230,7 +230,7 @@ class MainWindow(QtWidgets.QMainWindow):
        
 
             print('reached here 1')
-            self.GP.estimate_a0(1)
+            self.GP.estimate_a0(3)
            
         else:
 

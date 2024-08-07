@@ -20,6 +20,7 @@ class algorithm:
         self.freq_ls = [0]
 
         self.gp = LearningModule(3)
+        self.reset()
         
         # self.gp_sim = GP.LearningModule()
 
@@ -429,8 +430,9 @@ class algorithm:
 
         return path
 
-    def find_closest_index(current_state, reference_trajectory, current_index, window_size=10):
+    def find_closest_index(self, current_state, reference_trajectory, current_index, window_size=10):
         # Define the search window
+        print("curent", current_index, window_size)
         start_index = max(0, current_index - window_size)
         end_index = min(len(reference_trajectory), current_index + window_size)
         
@@ -486,11 +488,11 @@ class algorithm:
     
 
         x_current = np.array([microrobot_latest_position_x, microrobot_latest_position_y])
-        closest_index = self.find_closest_index(x_current, ref, current_index)
+        closest_index = self.find_closest_index(x_current, self.ref, self.current_index)
          # Update the current reference index
-        current_index = closest_index
-        # current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
-        current_ref = self.ref[self.counter:min(closest_index+self.N, self.time_range), :]
+        self.current_index = closest_index
+        current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
+        #current_ref = self.ref[self.counter:min(closest_index+self.N, self.time_range), :]
         if current_ref.shape[0] < self.N:
             # Pad the reference if it's shorter than the prediction horizon
             current_ref = np.vstack((current_ref, np.ones((self.N-current_ref.shape[0], 1)) * self.ref[-1, :]))
@@ -513,11 +515,13 @@ class algorithm:
             muY,sigY = self.gp.gprY.predict(np.array([[alpha_GP, freq_GP]]), return_std=True)
             # D = np.array([gp_sim.Dx, gp_sim.Dy])
             try:
+                print("using GP",[muX, muY])
                 v_e = np.array([muX[0], muY[0]])
             except Exception:
+                print("not using GP")
                 v_e = np.array([0,0])
            
-            v_e = np.array([muX[0], muY[0]])
+            #v_e = np.array([muX[0], muY[0]])
             #v_e = np.array([0,0])
             u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, v_e)
             
