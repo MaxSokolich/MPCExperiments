@@ -127,7 +127,7 @@ class algorithm:
         
         self.gp.load_GP()
 
-    def generate_infinity_path(self, width, height, center, num_points=1100):
+    def generate_infinity_path(self, width, height, center, num_points=1600):
         """
         Generate points for an infinity-shaped path with constant velocity.
 

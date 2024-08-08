@@ -21,7 +21,7 @@ class gen_data2:
         
     def reset(self):
  
-        self.max_steps = 1100
+        self.max_steps = 1600
         
         ### freq range for gen data
         self.f_min = 0
