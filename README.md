@@ -1,3 +1,10 @@
+This repo contains source code for magnetic microrobotic experimentation. The code contains a novel Model Predictive Control (MPC) using gaussen processes for disturbance estimation for autonmously controlling a magnetic microrobot. 
+
+M. Kermanshah, L. E. Beaver, M. Sokolich, S. Das, R. Weiss, R. Tron, and C.Belta, “Control of microrobots using model predictive control and gaussian processes for disturbance estimation,” arXiv preprint arXiv:2406.02722, 2024.
+
+
+
+
 This is a repo containing just tracking information from a FLIR Blackfly camera
 
 
