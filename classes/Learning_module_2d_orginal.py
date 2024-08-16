@@ -113,22 +113,6 @@ class LearningModule:
 
 
         
-
-        # dt_ls = sheet2_df['Times'][first_non_zero_alpha:last_full_cycle].to_list()
-        # time = np.zeros_like(dt_ls)
-        # for i in range(len(time)-1):
-        #     time[i+1]= time[i]+dt_ls[i]
-        # df['Frame'] = sheet1_df['Frame'][first_non_zero_alpha:last_full_cycle]
-        # df['Rolling Frequency'] = sheet1_df['Rolling Frequency'][first_non_zero_alpha:]
-        # df['Alpha'] = sheet1_df['Alpha'][first_non_zero_alpha:last_full_cycle]
-        # df['Times'] = time
-        # df['Pos X'] = sheet2_df['Pos X'][first_non_zero_alpha:last_full_cycle]
-        # df['Pos Y'] = sheet2_df['Pos Y'][first_non_zero_alpha:last_full_cycle]
-        # df['Stuck?'] = sheet2_df['Stuck?'][first_non_zero_alpha:last_full_cycle]
-        # df['Vel X'] = sheet2_df['Vel X'][first_non_zero_alpha:last_full_cycle]
-        # df['Vel Y'] = sheet2_df['Vel Y'][first_non_zero_alpha:last_full_cycle]
-
-        
     
         
         lf  = len(freq_ls)
@@ -291,62 +275,7 @@ class LearningModule:
     # px, py, alpha, time are numpy arrays, freq is constant
     # returns an estimate of a_0
     def learn(self, vx, vy, alpha, freq):
-        #set time to start at 0
-        # time -= time[0]
-        # trsh = 900
-        # px = px[0:trsh]
-        # py = py[0:trsh]
-        # time = time[0:trsh]
-        # alpha= alpha[0:trsh]
-        # freq = freq[0:trsh]
 
-        # # apply smoothing to the position signals before calculating velocity 
-        # # dt is ~ 35 ms, so filter time ~= 0.035*N (this gives N = 38)
-        # N = (int)(1 / 0.035 / 2) #filter position data due to noisy sensing
-
-        # px = uniform_filter1d(px, N, mode="nearest")
-        # py = uniform_filter1d(py, N, mode="nearest")
-
-        # #calculate velocity via position derivative
-        # vx = np.gradient(px, time)
-        # vy = np.gradient(py, time)
-
-        # # apply smoothing to the velocity signal
-        # vx = uniform_filter1d(vx, (int)(N/2), mode="nearest")
-        # vy = uniform_filter1d(vy, (int)(N/2), mode="nearest")
-       
-
-        #calculate speed to fit a_0
-        # speed = np.sqrt( (vx - self.Dx )**2 + (vy - self.Dy)**2 )
-
-        #alpha  = 1k means the controller is off, delete those frames
-        # todel = np.argwhere(alpha >= 500)
-        # if len(todel) > 0:
-        #     todel = int(todel[0])
-        #     alpha = alpha[0:todel-1]
-        #     freq  = freq[0:todel-1]
-        #     px = px[0:todel-1]
-        #     py = py[0:todel-1]
-        #     vx = vx[0:todel-1]
-        #     vy = vy[0:todel-1]
-        #     time = time[0:todel-1]
-        #     speed = speed[0:todel-1]
-
-        #smoothing creates a boundary effect -- let's remove it
-        # alpha = alpha[N:-N]
-        # freq = freq[N:-N]
-        # px = px[N:-N]
-        # py = py[N:-N]
-        # vx = vx[N:-N]
-        # vy = vy[N:-N]
-        # time = time[N:-N]
-        # speed = speed[N:-N]
-
-     
-
-    # Tr
-        #generate empty NP arrays for X (data) and Y (outputs)
-        #X = alpha.reshape(-1,1)
         
         X = np.vstack( [alpha, freq] ).transpose()
                 
@@ -522,8 +451,8 @@ class LearningModule:
 
     def visualize(self):
 
-        alpha_range = np.linspace( -np.pi, np.pi, 200 )
-        freq_range  = np.linspace( 1, 10, 200 )
+        alpha_range = np.linspace(0, 2*np.pi, 200 )
+        freq_range  = np.linspace( 1, 5, 200 )
         
         
         alpha,freq = np.meshgrid(alpha_range, freq_range)

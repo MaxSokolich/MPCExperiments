@@ -42,18 +42,18 @@ class VideoThread(QThread):
         
         #robot mask attributes
         self.robot_mask_lower = 0
-        self.robot_mask_upper = 128
-        self.robot_mask_dilation = 0  
-        self.robot_mask_blur = 0
-        self.robot_crop_length = 110
+        self.robot_mask_upper = 111
+        self.robot_mask_dilation = 3  
+        self.robot_mask_blur = 6
+        self.robot_crop_length = 90
         self.robot_mask_flag = True
         self.robot_list = []
 
         #cell mask attributes
         self.cell_mask_lower = 0
-        self.cell_mask_upper = 128
-        self.cell_mask_dilation = 0
-        self.cell_mask_blur = 0
+        self.cell_mask_upper = 110
+        self.cell_mask_dilation = 21
+        self.cell_mask_blur = 5
         self.cell_crop_length = 40
         self.cell_mask_flag = False
         self.cell_list = []

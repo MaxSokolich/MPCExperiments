@@ -10,14 +10,20 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.optimize import minimize, minimize_scalar
 
 from sklearn.model_selection import train_test_split
-
+import pandas as pd
 
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 import joblib
 from sklearn.linear_model import LinearRegression
+import os
 
+# Function to find the closest grid point by Euclidean distance
+def find_closest_grid_point(alpha, freq, alpha_grid, freq_grid):
+    distances = np.sqrt((alpha_grid - alpha) ** 2 + (freq_grid - freq) ** 2)
+    closest_idx = np.unravel_index(np.argmin(distances), distances.shape)
+    return closest_idx
 
 def objective(X, a0, v_d, GPx, GPy):
 
@@ -57,13 +63,41 @@ class LearningModule:
         self.Dy = 0
         self.plot = False
         self.cycle = cycle
+        
+    def normalize_angle(self, angles):
+        """
+        Normalize a single angle, list of angles, or numpy array of angles to the range [0, 2π].
+        Returns:
+        float, list, or numpy array: Normalized angle(s) in the range [0, 2π].
+        """
+        if isinstance(angles, (list, np.ndarray)):
+            return np.mod(angles, 2 * np.pi)
+        else:
+            return angles % (2 * np.pi)
 
-    
-    def load_GP(self):
-        self.gprY = joblib.load('classes/gpY_2d.pkl')
-        self.gprX = joblib.load('classes/gpX_2d.pkl')
+        
+    def load_GP(self, directory=None):
+        """
+        Load Gaussian Process models and other necessary files.
+
+        Args:
+        directory (str, optional): Directory to load files from. Defaults to None.
+        """
+        # Set the default directory if none is provided
+        if directory is None:
+            directory = 'classes'
+        
+        # Construct file paths
+        gpY_path = os.path.join(directory, 'gpY_2d.pkl')
+        gpX_path = os.path.join(directory, 'gpX_2d.pkl')
+        a0_path = os.path.join(directory, 'a0_est.npy')
+        
+        # Load files
+        self.gprY = joblib.load(gpY_path)
+        self.gprX = joblib.load(gpX_path)
+        self.a0 = np.load(a0_path)
+        
         print('GP is loaded')
-        self.a0_sim = np.load('classes/a0_est.npy')
 
     def visualize_mu(self, alpha_grid, freq_grid ,vx_grid, vy_grid):
         error_x = vx_grid - self.a0 * freq_grid * np.sin(alpha_grid)
@@ -108,9 +142,9 @@ class LearningModule:
         # To read a specific sheet by name
         data = np.array(data)
         freq_read = data[:,-1]
-        alpha_read = np.pi/2-data[:,-2]
+        alpha_read = data[:,-2]
         vx_read = data[:,3]
-        vy_read = -data[:,4]
+        vy_read = data[:,4]
         freq_ls = np.unique(freq_read)
         alpha_ls = np.unique(alpha_read)
 
@@ -137,31 +171,223 @@ class LearningModule:
 
         
         alpha_grid, freq_grid  = np.meshgrid(alpha_ls, freq_ls)
-        self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid = alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
+        self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid = self.normalize_angle(np.pi/2+alpha_grid), freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
         # return  alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
-    
-    def estimate_a0(self):
 
-        #### Estimate a0 and train GP
-        X = np.vstack( [self.alpha_grid.flatten(), self.freq_grid.flatten()] ).transpose()
-        Y = np.vstack([self.vx_grid.flatten(), self.vy_grid.flatten()]).transpose()
 
-        X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.15, random_state=42)
-        # plt.scatter(self.freq_sim*np.cos(self.alpha_sim),self.vx_grid.flatten())
-        # plt.scatter(self.freq_sim*np.sin(self.alpha_sim),self.vy_grid.flatten())
-        # plt.show()
+
+     
+    def dyn_model(self, alpha, freq):
+      
+
+        #evaluate the GPs
+        X = np.array([[alpha, freq]])
+  
+        muX,sigX = self.gprX.predict(X, return_std=True)
+        muY,sigY = self.gprY.predict(X, return_std=True)
+
+        v_x = self.a0*freq*np.cos(alpha)+muX
+        v_y = -self.a0*freq*np.sin(alpha)+muY
+        return [v_x, v_y], [self.a0*freq*np.cos(alpha), -self.a0*freq*np.sin(alpha)],[sigX, sigY]
         
-        a0_est = self.linear_reg(self.alpha_grid.flatten(), self.freq_grid.flatten(), self.vx_grid.flatten(),self.vy_grid.flatten())
-        print('a0_est=',a0_est)
-        np.save('a0_est.npy', a0_est)
-       
- 
-        self.a0 = a0_est
-        self.learn(self.vx_grid.flatten(), self.vy_grid.flatten(), self.alpha_grid.flatten(), self.freq_grid.flatten())
-        # self.learn( Y_train[:,0], Y_train[:,1], X_train[:,0], X_train[:,1])
-        print('Trainig completed')
-        if self.plot:
-            self.visualize_mu(self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid)
+    def read_data_action2(self, data, obj):
+        # If you are not sure about the sheet names, you can list all sheet names like this
+        # cycle = 1
+        # sc_factor = 0.28985 * obj
+        sc_factor = 0.28985 * obj
+        # To read a specific sheet by name
+        data = np.array(data)
+        freq_read = data[:,-1]
+        alpha_read = np.pi/2+data[:,-2]
+        vx_read = data[:,3]
+        vy_read = data[:,4]
+        # freq_ls = np.unique(freq_read)
+        # alpha_ls = np.unique(alpha_read)
+  
+    
+        self.alpha_infinity, self.freq_infinity ,self.vx_infinity, self.vy_infinity = self.normalize_angle(alpha_read), freq_read ,vx_read, vy_read
+        self.alpha_all, self.freq_all = np.hstack([self.alpha_grid.flatten(), self.alpha_infinity.flatten()]), np.hstack([self.freq_grid.flatten(), self.freq_infinity.flatten()])
+        self.vx_all, self.vy_all = np.hstack([self.vx_grid.flatten(), self.vx_infinity.flatten()]), np.hstack([self.vy_grid.flatten(), self.vy_infinity.flatten()])
+        
+        
+        data = {
+            'alpha': self.alpha_all,
+            'freq': self.freq_all,
+            'vx': self.vx_all,
+            'vy': self.vy_all
+        }
+        df = pd.DataFrame(data)
+        # Define the bin sizes for alpha and freq
+        
+
+        # # Create bins for alpha and freq based on bin sizes
+        # alpha_bins = np.arange(df['alpha'].min(), df['alpha'].max() + bin_size_alpha, bin_size_alpha)
+        # freq_bins = np.arange(df['freq'].min(), df['freq'].max() + bin_size_freq, bin_size_freq)
+
+        # # Assign each point to a bin
+        # df['alpha_bin'] = pd.cut(df['alpha'], bins=alpha_bins, labels=False)
+        # df['freq_bin'] = pd.cut(df['freq'], bins=freq_bins, labels=False)
+
+        # # Group by the bins and calculate the mean vx and vy
+        # grouped = df.groupby(['alpha_bin', 'freq_bin']).agg({'vx': 'mean', 'vy': 'mean'}).reset_index()
+        #         # return  alpha_grid, freq_grid ,np.mean(vx_grid, axis=0), np.mean(vy_grid, axis=0)
+        # print('all_dataset_shape=', self.vx_all.shape)
+        # self.alpha_grouped, self.freq_grouped, self.vx_grouped, self.vy_grouped = np.array(grouped['alpha_bin']),  np.array(grouped['freq_bin']),  np.array(grouped['vx']),  np.array(grouped['vy'])
+        # print('grouped_dataset_shape=', self.alpha_grouped.shape)
+
+
+
+
+
+
+        # Define the range and resolution of alpha and freq
+        alpha_min, alpha_max, alpha_steps = 0, 2*np.pi, 200  # Replace with your values
+        freq_min, freq_max, freq_steps = 0, 5, 15  # Replace with your values
+
+        alpha_range = np.linspace(alpha_min, alpha_max, alpha_steps)
+        freq_range = np.linspace(freq_min, freq_max, freq_steps)
+
+        # Create the mesh grid
+        alpha_grid, freq_grid = np.meshgrid(alpha_range, freq_range)
+
+        # Initialize vx and vy grids with None and count grids with zeros
+        vx_grid = np.full(alpha_grid.shape, None)
+        vy_grid = np.full(freq_grid.shape, None)
+        count_grid = np.zeros(alpha_grid.shape)
+
+
+      
+
+        # Process each data point
+        for index, point in df.iterrows():
+            alpha_idx, freq_idx = find_closest_grid_point(point['alpha'], point['freq'], alpha_grid, freq_grid)
+
+            if vx_grid[alpha_idx, freq_idx] is None:
+                vx_grid[alpha_idx, freq_idx] = point['vx']
+                vy_grid[alpha_idx, freq_idx] = point['vy']
+                count_grid[alpha_idx, freq_idx] = 1
+            else:
+                count_grid[alpha_idx, freq_idx] += 1
+                vx_grid[alpha_idx, freq_idx] = ((vx_grid[alpha_idx, freq_idx] * (count_grid[alpha_idx, freq_idx] - 1)) + point['vx']) / count_grid[alpha_idx, freq_idx]
+                vy_grid[alpha_idx, freq_idx] = ((vy_grid[alpha_idx, freq_idx] * (count_grid[alpha_idx, freq_idx] - 1)) + point['vy']) / count_grid[alpha_idx, freq_idx]
+
+        # Extract non-None values into lists for the dataset
+        self.alpha_grouped = []
+        self.freq_grouped = []
+        self.vx_grouped = []
+        self.vy_grouped = []
+
+        for i in range(vx_grid.shape[0]):
+            for j in range(vx_grid.shape[1]):
+                if vx_grid[i, j] is not None and vy_grid[i, j] is not None:
+                    self.alpha_grouped.append(alpha_grid[i, j])
+                    self.freq_grouped.append(freq_grid[i, j])
+                    self.vx_grouped.append(vx_grid[i, j])
+                    self.vy_grouped.append(vy_grid[i, j])
+
+        # Create the dataset and convert to a DataFrame
+        # data = {
+        #     'alpha': alpha_all,
+        #     'freq': freq_all,
+        #     'vx': vx_all,
+        #     'vy': vy_all
+        # }
+
+        
+        self.alpha_grouped, self.freq_grouped, self.vx_grouped, self.vy_grouped = np.array( self.alpha_grouped),  np.array(self.freq_grouped),  np.array(self.vx_grouped),  np.array(self.vy_grouped)
+        print('all_dataset_shape=',self.vx_grouped.shape)
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+
+
+
+
+    
+    def estimate_a0(self, mod):
+        if mod == 0:
+        #### Estimate a0 and train GP
+            X = np.vstack( [self.alpha_grid.flatten(), self.freq_grid.flatten()] ).transpose()
+            Y = np.vstack([self.vx_grid.flatten(), self.vy_grid.flatten()]).transpose()
+
+            X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.15, random_state=42)
+            # plt.scatter(self.freq_sim*np.cos(self.alpha_sim),self.vx_grid.flatten())
+            # plt.scatter(self.freq_sim*np.sin(self.alpha_sim),self.vy_grid.flatten())
+            # plt.show()
+            
+            a0_est = self.linear_reg(self.alpha_grid.flatten(), self.freq_grid.flatten(), self.vx_grid.flatten(),self.vy_grid.flatten())
+            print('a0_est=',a0_est)
+            np.save('a0_est.npy', a0_est)
+        
+    
+            self.a0 = a0_est
+            self.learn(self.vx_grid.flatten(), self.vy_grid.flatten(), self.alpha_grid.flatten(), self.freq_grid.flatten())
+            # self.learn( Y_train[:,0], Y_train[:,1], X_train[:,0], X_train[:,1])
+            print('Trainig completed')
+            if self.plot:
+                self.visualize_mu(self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid)
+
+
+        if mod == 1:
+            print('reacehd here 2')
+        #### Estimate a0 and train GP
+            # X = np.vstack( [self.alpha_all.flatten(), self.freq_all.flatten()] ).transpose()
+            # Y = np.vstack([self.vx_all.flatten(), self.vy_all.flatten()]).transpose()
+            # print('datasize===', len(self.vx_all.flatten()))
+
+            # X = np.vstack( [self.alpha_grouped.flatten(), self.freq_grouped.flatten()] ).transpose()
+            # Y = np.vstack([self.vx_grouped.flatten(), self.vy_grouped.flatten()]).transpose()
+            # print('datasize===', len(self.vx_grouped.flatten()))
+
+            # X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.15, random_state=42)
+            # plt.scatter(self.freq_sim*np.cos(self.alpha_sim),self.vx_grid.flatten())
+            # plt.scatter(self.freq_sim*np.sin(self.alpha_sim),self.vy_grid.flatten())
+            # plt.show()
+            
+            self.a0 = self.linear_reg(self.alpha_all.flatten(), self.freq_all.flatten(), self.vx_all.flatten(),self.vy_all.flatten())
+            print('a0=',self.a0)
+            np.save('a0.npy', self.a0)
+        
+    
+            # self.a0 = a0_est
+            self.learn(self.vx_all.flatten(), self.vy_all.flatten(), self.alpha_all.flatten(), self.freq_all.flatten())
+            # self.learn( Y_train[:,0], Y_train[:,1], X_train[:,0], X_train[:,1])
+            print('Trainig completed')
+            if self.plot:
+                self.visualize_mu(self.alpha_grid, self.freq_grid ,self.vx_grid, self.vy_grid)
+            
+        if mod == 2:
+            n = int(len(self.alpha_all.flatten() * 70 / 100))
+            
+            # Generate random indices
+            indices = np.random.choice(len(self.alpha_all.flatten()), n, replace=False)
+            
+            # Select and return the elements at the generated indices
+            self.learn(self.vx_all.flatten()[indices], self.vy_all.flatten()[indices], self.alpha_all.flatten()[indices], self.freq_all.flatten()[indices])
+        if mod == 3:
+            # Select and return the elements at the generated indices
+            print("mod 3")
+            self.a0 = self.linear_reg(self.alpha_grid.flatten(), self.freq_grid.flatten(), self.vx_grid.flatten(),self.vy_grid.flatten())
+            self.learn(self.vx_grouped.flatten(), self.vy_grouped.flatten(), self.alpha_grouped.flatten(), self.freq_grouped.flatten())
+
+
 
         
 
@@ -187,8 +413,8 @@ class LearningModule:
 
 
 
-        print("a0_y:", model_y.coef_)
-        print("D_y:", model_y.intercept_)
+        print("a0_y:", -model_y.coef_)
+        print("D_y:", -model_y.intercept_)
 
        
 
@@ -240,7 +466,9 @@ class LearningModule:
             plt.title('Linear Regression y Axis')
             plt.legend()
             plt.show()
-        a0 =0.5*model_x.coef_[0][0]+0.5*model_y.coef_[0][0]
+        a0 =0.5*model_x.coef_[0][0]-0.5*model_y.coef_[0][0]
+        print('a0=================', a0)
+        self.a0 = a0
 
 
         ####Visualize the error
@@ -355,8 +583,8 @@ class LearningModule:
         X = np.vstack( [alpha, freq] ).transpose()
                 
         #v_e = v_actual - v_desired = v - a0*f*[ cos alpha; sin alpha]
-        Yx = vx - self.a0 * freq * np.sin(alpha)
-        Yy = vy - self.a0 * freq * np.cos(alpha)
+        Yx = vx - self.a0 * freq * np.cos(alpha)
+        Yy = vy + self.a0 * freq * np.sin(alpha)
 
         self.gprX.fit(X, Yx)
         self.gprY.fit(X, Yy)

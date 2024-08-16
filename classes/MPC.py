@@ -27,7 +27,7 @@ class MPC:
         self.Q = Q
         self.R = R
 
-        control_bound = 5
+        control_bound = 3.5
    
         self.umax =  control_bound
         self.umin = -control_bound
@@ -74,7 +74,7 @@ class MPC:
         # Decision variables for states and inputs
         x = m.addMVar((self.N+1, self.nx), lb=-GRB.INFINITY, name="x")
         u = m.addMVar((self.N, self.nu), lb= self.umin, ub=self.umax, name="u")
-        
+  
         # Initial state constraint
         m.addConstr(x[0, :] == x0, name="init")
     
@@ -91,14 +91,24 @@ class MPC:
         #     m.addConstr(x[t, :] <= xmax, name=f"xmax_{t}")
 
         # Objective: Minimize cost function
-        cost = 0
-        gamma = 1
+        # abs_diff = m.addVars(self.N-1, name="abs_diff")
+
+        # Define the cost function
+        cost = gp.QuadExpr()
+
+        gamma = 0.85
         for t in range(self.N):
             cost += gamma**t*(x[t, :] - ref[t, :]) @ self.Q @ (x[t, :] - ref[t, :]) + u[t, :] @ self.R @ u[t, :]
         
         # cost+=1000* (x[t, :] - ref[t, :]) @ Q @ (x[t, :] - ref[t, :])
-        # for t in range(N-1):
-        #     cost += (u[t, :]-u[t+1,:]) @ R @ (u[t, :]-u[t+1,:])
+        # for t in range(self.N-1):
+        #     u_sq_diff = (u[t, 0]**2 + u[t, 1]**2) - (u[t+1, 0]**2 + u[t+1, 1]**2)
+        #     m.addConstr(abs_diff[t] >= u_sq_diff, name=f"abs_diff_pos_{t}")
+        #     m.addConstr(abs_diff[t] >= -u_sq_diff, name=f"abs_diff_neg_{t}")
+        #     cost += abs_diff[t]
+        # for t in range(self.N-1):
+        #     cost += (u[t, :]-u[t+1,:]) @ self.R @ (u[t, :]-u[t+1,:])
+           
    
         m.setObjective(cost, GRB.MINIMIZE)
 
@@ -154,7 +164,11 @@ class MPC:
     def convert_control(self, u_mpc):
 
         f_t = np.linalg.norm(u_mpc)
-        alpha_t = math.atan2(-u_mpc[1], u_mpc[0]) - np.pi/2
+        #alpha_t = math.atan2(-u_mpc[1], u_mpc[0]) - np.pi/2
+        alpha_t = math.atan2(u_mpc[1], u_mpc[0]) - np.pi/2
+        
+        #alpha_t = np.pi 
+        #f_t = 5
         return f_t, alpha_t
                 
             

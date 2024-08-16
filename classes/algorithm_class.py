@@ -1,6 +1,11 @@
 
 import numpy as np
 import sys
+import os
+
+# Add the directory containing the 'classes' folder to the Python path
+
+
 from classes.Learning_module_2d import LearningModule # type: ignore
 from classes.MR_simulator import Simulator
 import math 
@@ -15,6 +20,7 @@ class algorithm:
         self.freq_ls = [0]
 
         self.gp = LearningModule(3)
+        self.reset()
         
         # self.gp_sim = GP.LearningModule()
 
@@ -54,7 +60,11 @@ class algorithm:
         # node_ls[3] = np.array([1500, 1600])
         # node_ls = np.delete(node_ls, 1, 0)
         gpath_planner_traj = self.generate_in_between_points(node_ls)
-        self.ref = gpath_planner_traj
+        width = 1600
+        height = 2000
+        center = [1200, 1000]
+        self.ref = self.generate_infinity_path(width, height, center)
+        print(self.ref)
         # ref = np.load('classes')
 
 
@@ -73,7 +83,7 @@ class algorithm:
 
         ########MPC parameters
         # B  = self.a0_sim*self.dt*np.array([[1,0],[0,1]])
-        B  = self.a0_sim*np.array([[1,0],[0,1]])
+        B  = self.a0_sim*np.array([[1,0],[0,-1]])
         A = np.eye(2)
         # Weight matrices for state and input
         Q = np.array([[1,0],[0,1]])
@@ -111,15 +121,53 @@ class algorithm:
         
     def reset(self):
         self.counter = 0
+        self.current_index = 0
     
     def load_GP(self):
         
         self.gp.load_GP()
+
+    def generate_infinity_path(self, width, height, center, num_points=1600):
+        """
+        Generate points for an infinity-shaped path with constant velocity.
+
+        Args:
+        width (float): The width of the infinity path.
+        height (float): The height of the infinity path.
+        center (tuple): The (x, y) center of the infinity path.
+        num_points (int): Number of points to generate.
+
+        Returns:
+        np.array: Array of points (x, y) that form the infinity path.
+        """
+        # Unpack the center coordinates
+        cx, cy = center[0], center[1]
         
+        # Generate t values from 0 to 2*pi
+        t = np.linspace(0, 2 * np.pi, num_points)
+        
+        # Parametric equations for the lemniscate
+        x = cx + (width / 2) * np.sin(t) / (1 + np.cos(t)**2)
+        y = cy + (height / 2) * np.sin(t) * np.cos(t) / (1 + np.cos(t)**2)
+        
+        # Calculate cumulative distances
+        distances = np.sqrt(np.diff(x)**2 + np.diff(y)**2)
+        velocity_track = 2
+        cumulative_distances = 1/velocity_track*np.insert(np.cumsum(distances), 0, 0)
+        
+        # Generate uniform distances
+        uniform_distances = np.linspace(0, cumulative_distances[-1], num_points)
+        
+        # Interpolate to get points at uniform distances
+        x_uniform = np.interp(uniform_distances, cumulative_distances, x)
+        y_uniform = np.interp(uniform_distances, cumulative_distances, y)
+        
+        return np.column_stack((x_uniform, y_uniform))
+
 
     def correct_position(self, robot_list):
         microrobot_latest_position_x = robot_list[-1].position_list[-1][0]
-        microrobot_latest_position_y = robot_list[-1].position_list[-1][1]
+        microrobot_latest_position_y = 2048 - robot_list[-1].position_list[-1][1] 
         y_max = 2048
         y = y_max - microrobot_latest_position_y
         out = np.array([microrobot_latest_position_x, y])
@@ -223,6 +271,11 @@ class algorithm:
 
         alpha_t = 0
         freq_t =0
+
+
+
+        
+
         for t in range(time_steps):
             goal = self.goal
             current_ref = self.find_stright_path( x_traj[t, :], goal)
@@ -377,15 +430,32 @@ class algorithm:
 
         return path
 
-    
-    
+    def find_closest_index(self, current_state, reference_trajectory, current_index, window_size=10):
+        # Define the search window
+        print("curent", current_index, window_size)
+        start_index = max(0, current_index - window_size)
+        end_index = min(len(reference_trajectory), current_index + window_size)
+        
+        # Extract the relevant part of the reference trajectory
+        search_window = reference_trajectory[start_index:end_index]
+        
+        # Calculate the Euclidean distance within the window
+        distances = np.linalg.norm(search_window - current_state, axis=1)
+        
+        # Find the index of the minimum distance within the window
+        closest_index_within_window = np.argmin(distances)
+        
+        # Convert back to the original reference trajectory index
+        closest_index = start_index + closest_index_within_window
+        return closest_index
+
 
 
     def run(self, robot_list, frame): #this executes at every frame
 
         self.counter += 1
 
-        cv2.circle(frame,(self.goal[0], self.goal[1]),20,(0,0,0), -1)
+        #cv2.circle(frame,(self.goal[0], self.goal[1]),20,(0,0,0), -1)
 
 
         #determines what type of path were following from trajecotry list
@@ -395,12 +465,6 @@ class algorithm:
             self.ref = ref
         
 
-        current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
-
-        if current_ref.shape[0] < self.N:
-            # Pad the reference if it's shorter than the prediction horizon
-            current_ref = np.vstack((current_ref, np.ones((self.N-current_ref.shape[0], 1)) * self.ref[-1, :]))
-
         ### Disturbance Compensator 
         # muX,sigX = self.gp_sim.gprX.predict(np.array([[self.alpha_t, self.freq_t]]), return_std=True)
         # muY,sigY = self.gp_sim.gprY.predict(np.array([[self.alpha_t, self.freq_t]]), return_std=True)
@@ -409,16 +473,30 @@ class algorithm:
         
         
         #microrobot_latest_position = x_traj[t, :]
-
-
-        
         
         #define robot position
         microrobot_latest_position_x = robot_list[-1].position_list[-1][0]
-        microrobot_latest_position_y = robot_list[-1].position_list[-1][1]
+        microrobot_latest_position_y = robot_list[-1].position_list[-1][1] 
         microrobot_latest_position = np.array([microrobot_latest_position_x, 
                                                microrobot_latest_position_y]).reshape(2)
+        vx = robot_list[-1].velocity_list[-1][0]
+        vy = robot_list[-1].velocity_list[-1][1]
+        print("velocity",(vx,vy))
+
         
+
+    
+
+        x_current = np.array([microrobot_latest_position_x, microrobot_latest_position_y])
+        closest_index = self.find_closest_index(x_current, self.ref, self.current_index)
+         # Update the current reference index
+        self.current_index = closest_index
+        current_ref = self.ref[self.counter:min(self.counter+self.N, self.time_range), :]
+        #current_ref = self.ref[self.counter:min(closest_index+self.N, self.time_range), :]
+        if current_ref.shape[0] < self.N:
+            # Pad the reference if it's shorter than the prediction horizon
+            current_ref = np.vstack((current_ref, np.ones((self.N-current_ref.shape[0], 1)) * self.ref[-1, :]))
+
         #print(microrobot_latest_position)
         #print("X0", microrobot_latest_position)
         # u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, (v_e)*self.dt)
@@ -428,17 +506,26 @@ class algorithm:
             self.f_t, self.alpha_t = 0,0
             path = []
         else:
-            alpha_GP = -np.pi/2-self.alpha_ls[-1]
+
+
+
+            alpha_GP = self.alpha_ls[-1]
             freq_GP = self.freq_ls [-1]
             muX,sigX = self.gp.gprX.predict(np.array([[alpha_GP, freq_GP]]), return_std=True)
             muY,sigY = self.gp.gprY.predict(np.array([[alpha_GP, freq_GP]]), return_std=True)
             # D = np.array([gp_sim.Dx, gp_sim.Dy])
             try:
+                print("using GP",[muX, muY])
                 v_e = np.array([muX[0], muY[0]])
             except Exception:
+                print("not using GP")
                 v_e = np.array([0,0])
-            # v_e = np.array([0,0])
+           
+            #v_e = np.array([muX[0], muY[0]])
+            #v_e = np.array([0,0])
             u_mpc , pred_traj = self.mpc.control_gurobi(microrobot_latest_position, current_ref, v_e)
+            
+            #u_mpc = np.array([0,1])
             path = current_ref
             print('u_mpc = ', u_mpc)
             self.f_t, self.alpha_t = self.mpc.convert_control(u_mpc)
