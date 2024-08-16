@@ -10,6 +10,7 @@ from classes.gui_functions import MainWindow
 # add joystick when camera is off. see above
 # calibrate x and y z coils by adding a calbration value
 # add a track all feature
+# enable and dsiable GP button
 
  
 
